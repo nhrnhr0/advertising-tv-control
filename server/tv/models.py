@@ -8,12 +8,21 @@ class Broadcast(models.Model):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     media = models.FileField(upload_to='broadcasts/', blank=True, null=True)
+    media_type = models.CharField(max_length=100, blank=True, null=True)
     def __str__(self):
         return self.name
     def save(self,*args, **kwargs):
         if not self.name:
             self.name = self.media.name
-        
+        if not self.media_type and self.media:
+            url = self.media.url
+            media_type = url.split('.')[-1].lower() # video/image
+            if media_type == 'mp4':
+                self.media_type = 'video'
+            elif media_type == 'jpg' or media_type == 'png' or media_type == 'jpeg' or media_type == 'gif' or media_type == 'svg' or media_type == 'webp':
+                self.media_type = 'image'
+            else:
+                self.media_type = 'unknown'
         return super().save(*args, **kwargs)
 
 
