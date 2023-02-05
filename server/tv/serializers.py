@@ -4,7 +4,10 @@ from rest_framework import routers, serializers, viewsets
 from .models import Tv, Broadcast, BroadcastInTv
 class BroadcastInTvSerializer(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
-    broadcast__media = serializers.CharField(source='broadcast.media', read_only=True)
+    broadcast__media = serializers.SerializerMethodField()
+    def get_broadcast__media(self, obj):
+        return obj.broadcast.media.url
+    # serializers.CharField(source='broadcast.media', read_only=True)
     class Meta:
         model = BroadcastInTv
         fields = ('broadcast','broadcast__name', 'broadcast__media', 'duration', 'order', 'updated', 'created',)
