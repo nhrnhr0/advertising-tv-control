@@ -1,5 +1,6 @@
 from typing import Iterable, Optional
 from django.db import models
+from django.utils.safestring import mark_safe
 
 
 class Broadcast(models.Model):
@@ -47,6 +48,7 @@ class BroadcastInTv(models.Model):
 # Create your models here.
 class Tv(models.Model):
     name = models.CharField(max_length=100)
+    pi = models.OneToOneField('pi.PiDevice', on_delete=models.CASCADE, blank=True, null=True, related_name='tv')
     broadcasts = models.ManyToManyField(Broadcast, blank=True, related_name='tv', through='BroadcastInTv')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -57,3 +59,31 @@ class Tv(models.Model):
         return f"/tv/{self.id}"
     def __str__(self):
         return self.name
+    
+    def pi_admin_link(self):
+        if self.pi:
+            # /admin/pi/pidevice/?device_id=XXX
+            return mark_safe(f'<a href="/admin/pi/pidevice/?device_id={self.pi.device_id}">{str(self.pi)}</a>')
+            # return mark_safe(f'<a href="/admin/pi/pidevice/{self.pi.id}">{str(self.pi)}</a>')
+        else:
+            return 'Not set'
+    pi_admin_link.short_description = 'Pi'
+    
+    
+    def pi__cec_hdmi_status(self):
+        if self.pi:
+            return self.pi.cec_hdmi_status
+        else:
+            return 'Not set'
+    def pi__is_socket_connected_live(self):
+        if self.pi:
+            return self.pi.is_socket_connected_live()
+        else:
+            return False
+    pi__is_socket_connected_live.boolean = True
+    def pi__humanize_socket_status_updated_ago(self):
+        if self.pi:
+            return self.pi.humanize_socket_status_updated_ago()
+        else:
+            return 'Not set'
+

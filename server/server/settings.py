@@ -26,12 +26,19 @@ SECRET_KEY = "django-insecure-598jv2*q+s4$rq3erkbei=9hz3%ozlecn$16zt=*0d-4#9+taw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com',]
+ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com','127.0.0.1']
 
+ASGI_APPLICATION = 'server.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default':{
+        'BACKEND':'channels.layers.InMemoryChannelLayer'
+    }
+}
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne", # for channels
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -43,6 +50,7 @@ INSTALLED_APPS = [
     
     # my apps
     'tv',
+    'pi',
     
 ]
 
@@ -106,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = 'Asia/Jerusalem'
 
 USE_I18N = True
 
