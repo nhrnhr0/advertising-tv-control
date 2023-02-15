@@ -37,16 +37,6 @@ class ChatConsumer(WebsocketConsumer):
     
     def update_tv_device(self, device_id,args_dict):
         tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
-        # if cec_hdmi_status:
-        #     tv_device.cec_hdmi_status = cec_hdmi_status
-        # if remote_last_image:
-        #     tv_device.remote_last_image = remote_last_image
-        # if socket_status_updated:
-        #     tv_device.socket_status_updated = socket_status_updated
-        # if is_socket_connected:
-        #     tv_device.is_socket_connected = is_socket_connected
-        # if group_channel_name:
-        #     tv_device.group_channel_name = group_channel_name
         if args_dict:
             for key, value in args_dict.items():
                 setattr(tv_device, key, value)
@@ -67,6 +57,7 @@ class ChatConsumer(WebsocketConsumer):
             self.group_name,
             self.channel_name
         )
+        self.update_tv_device(self.device_id,{'group_channel_name':self.group_name})
         # tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
         # self.tv_device = tv_device
         # self.tv_device.group_channel_name = self.group_name
