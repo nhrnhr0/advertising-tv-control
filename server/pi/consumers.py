@@ -47,7 +47,7 @@ class ChatConsumer(WebsocketConsumer):
     def connect(self):
         self.chat_room = self.scope['url_route']['kwargs']['uid']
         self.group_name = 'chat_%s' % self.chat_room
-        self.device_id = self.chat_room
+        self.device_id = str(self.chat_room)
         # await self.channel_layer.group_add(
         #     self.group_name,
         #     self.channel_name
@@ -57,7 +57,9 @@ class ChatConsumer(WebsocketConsumer):
             self.group_name,
             self.channel_name
         )
-        self.update_tv_device(self.device_id,{'group_channel_name':self.group_name})
+        socket_status_updated = timezone.now()
+        is_socket_connected = True
+        self.update_tv_device(self.device_id,{'group_channel_name':self.group_name,'socket_status_updated':socket_status_updated,'is_socket_connected':is_socket_connected})
         # tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
         # self.tv_device = tv_device
         # self.tv_device.group_channel_name = self.group_name
@@ -85,7 +87,6 @@ class ChatConsumer(WebsocketConsumer):
             'remote_last_image':remote_last_image,
             'socket_status_updated':socket_status_updated,
             'is_socket_connected':is_socket_connected,
-            'group_channel_name':self.group_name,
         })
         
         #     self.tv_device.cec_hdmi_status = text_data_json['data']['hdmi_status']
@@ -102,7 +103,7 @@ class ChatConsumer(WebsocketConsumer):
         )
         socket_status_updated = timezone.now()
         is_socket_connected = False
-        group_channel_name = None
+        group_channel_name = 'done'
         self.update_tv_device(self.device_id,{
             'socket_status_updated':socket_status_updated,
             'is_socket_connected':is_socket_connected,

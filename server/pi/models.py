@@ -25,9 +25,9 @@ class PiDevice(models.Model):
     def __str__(self):
         return self.name or self.device_id
     def is_socket_connected_live(self):
-        return self.group_channel_name is not None
+        return self.group_channel_name
     is_socket_connected_live.short_description = 'socket connected'
-    is_socket_connected_live.boolean = True
+    # is_socket_connected_live.boolean = True
     
     def send_reboot(self):
         try:
