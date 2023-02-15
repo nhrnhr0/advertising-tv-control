@@ -47,19 +47,26 @@ class PiDeviceAdmin(admin.ModelAdmin):
     hdmi_cec_off.short_description = "Turn off HDMI CEC"
     
     def reboot_device(self, request, queryset):
-        from .consumers import open_socket_connections
-        
+        # from .consumers import open_socket_connections
+
         for tv_device in queryset:
-            if tv_device.device_id in open_socket_connections and open_socket_connections[tv_device.device_id] is not None:
-                sock = open_socket_connections.get(tv_device.device_id)
-                sock.send(text_data=json.dumps({
-                    'type': 'command',
-                    'command': 'reboot'
-                }))
-                # request.user.message_set.create(message="Rebooted %s" % tv_device.name)
+            # if tv_device.device_id in open_socket_connections and open_socket_connections[tv_device.device_id] is not None:
+            #     sock = open_socket_connections.get(tv_device.device_id)
+            #     sock.send(text_data=json.dumps({
+            #         'type': 'command',
+            #         'command': 'reboot'
+            #     }))
+            #     # request.user.message_set.create(message="Rebooted %s" % tv_device.name)
+            #     messages.add_message(request, messages.INFO, 'Rebooted %s (%d)' % (tv_device.name, tv_device.id))
+            # else:
+            #     # request.user.message_set.create(message="Device %s is not connected" % tv_device.name)
+            #     messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (tv_device.name, tv_device.id))
+            
+            res = tv_device.send_reboot()
+            # tv_device.send_reboot is async. It returns True if the reboot command was sent, False if the device is not connected.
+            if res:
                 messages.add_message(request, messages.INFO, 'Rebooted %s (%d)' % (tv_device.name, tv_device.id))
             else:
-                # request.user.message_set.create(message="Device %s is not connected" % tv_device.name)
                 messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (tv_device.name, tv_device.id))
     reboot_device.short_description = "Reboot device"
     
@@ -97,3 +104,8 @@ class PiDeviceAdmin(admin.ModelAdmin):
                 messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (tv_device.name, tv_device.id))
     relaunch_kiosk_browser.short_description = "Relaunch kiosk browser"
 admin.site.register(PiDevice, PiDeviceAdmin)
+
+# from .models import OpenSocketConnections
+# class OpenSocketConnectionsAdmin(admin.ModelAdmin):
+#     list_display = ('get_device_uid', 'channel_name',)
+# admin.site.register(OpenSocketConnections, OpenSocketConnectionsAdmin)

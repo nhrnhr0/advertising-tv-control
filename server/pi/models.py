@@ -4,6 +4,7 @@ import humanize
 from django.utils.safestring import mark_safe
 import os
 
+
 # from pi.storage import OverwriteStorage
 # Create your models here.
 def image_path(instance, filename):
@@ -20,16 +21,23 @@ class PiDevice(models.Model):
     # is_socket_connected = models.BooleanField(default=False)
     socket_status_updated = models.DateTimeField(null=True)
     cec_hdmi_status = models.CharField(max_length=100, default='unknown')
-    
+    group_channel_name = models.CharField(max_length=100, blank=True, null=True)
     def __str__(self):
         return self.name or self.device_id
     def is_socket_connected_live(self):
-        from .consumers import open_socket_connections
-        return self.device_id in open_socket_connections
+        return self.group_channel_name is not None
     is_socket_connected_live.short_description = 'socket connected'
     is_socket_connected_live.boolean = True
     
-    
+    def send_reboot(self):
+        try:
+            channel_name = 'chat_' + self.device_id
+            from .consumers import send_reboot_to_channel
+            send_reboot_to_channel(channel_name)
+            return True
+        except Exception as e:
+            print(e)
+            return False
     def tv_admin_link(self):
         # /admin/tv/tv/1/change/
         if self.tv:
@@ -56,4 +64,13 @@ class PiDevice(models.Model):
     
     def image_tag(self):
         return mark_safe(u'<img src="%s" width="150px" height="150px" />' % self.remote_last_image.url)
-    
+
+
+# class OpenSocketConnections(models.Model):
+#     device = models.OneToOneField(PiDevice, on_delete=models.CASCADE, primary_key=True, related_name='open_socket_connection')
+#     channel_name = models.CharField(max_length=100, null=True)
+#     def __str__(self):
+#         return self.device.name or self.device.device_id
+
+#     def get_device_uid(self):
+#         return self.device.device_id

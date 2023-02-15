@@ -75,15 +75,18 @@ class Tv(models.Model):
             return self.pi.cec_hdmi_status
         else:
             return 'Not set'
+    pi__cec_hdmi_status.short_description = 'HDMI'
     def pi__is_socket_connected_live(self):
         if self.pi:
             return self.pi.is_socket_connected_live()
         else:
             return False
     pi__is_socket_connected_live.boolean = True
+    pi__is_socket_connected_live.short_description = 'Socket connected'
     def pi__humanize_socket_status_updated_ago(self):
         if self.pi:
             return self.pi.humanize_socket_status_updated_ago()
         else:
             return 'Not set'
+    pi__humanize_socket_status_updated_ago.short_description = 'last update'
 
