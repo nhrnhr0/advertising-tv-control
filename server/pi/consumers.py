@@ -34,7 +34,7 @@ class ChatConsumer(WebsocketConsumer):
     # def get_tv_device(self, device_id):
         
     #     return tv_device
-    
+    @database_sync_to_async
     def update_tv_device(self, device_id,args_dict):
         tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
         if args_dict:
