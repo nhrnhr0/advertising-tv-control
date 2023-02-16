@@ -29,11 +29,6 @@ class ChatConsumer(WebsocketConsumer):
             'command': 'reboot'
         }))
     
-    
-    # @database_sync_to_async
-    # def get_tv_device(self, device_id):
-        
-    #     return tv_device
     @database_sync_to_async
     def update_tv_device(self, device_id,args_dict):
         tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
@@ -48,11 +43,6 @@ class ChatConsumer(WebsocketConsumer):
         self.chat_room = self.scope['url_route']['kwargs']['uid']
         self.group_name = 'chat_%s' % self.chat_room
         self.device_id = str(self.chat_room)
-        # await self.channel_layer.group_add(
-        #     self.group_name,
-        #     self.channel_name
-        # )
-        # await self.accept()
         async_to_sync(self.channel_layer.group_add)(
             self.group_name,
             self.channel_name
@@ -60,11 +50,6 @@ class ChatConsumer(WebsocketConsumer):
         socket_status_updated = timezone.now()
         is_socket_connected = True
         self.update_tv_device(self.device_id,{'group_channel_name':self.group_name,'socket_status_updated':socket_status_updated,'is_socket_connected':is_socket_connected})
-        # tv_device, created = PiDevice.objects.get_or_create(device_id=device_id)
-        # self.tv_device = tv_device
-        # self.tv_device.group_channel_name = self.group_name
-        # self.tv_device.save()
-        # self.tv_device = self.get_tv_device(self.device_id)
         
         self.accept()
         
