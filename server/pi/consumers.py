@@ -81,12 +81,15 @@ class ChatConsumer(WebsocketConsumer):
         remote_last_image = ImageFile(io.BytesIO(raw_image), 'image.jpg')
         socket_status_updated = timezone.now()
         is_socket_connected = True
+        group_channel_name = 'chat_%s' % self.scope['url_route']['kwargs']['uid']
+        print('group_channel_name',group_channel_name)
         # self.update_tv_device(self.device_id,cec_hdmi_status=cec_hdmi_status,remote_last_image=remote_last_image,socket_status_updated=socket_status_updated,is_socket_connected=is_socket_connected,)
         self.update_tv_device(self.device_id,{
             'cec_hdmi_status':cec_hdmi_status,
             'remote_last_image':remote_last_image,
             'socket_status_updated':socket_status_updated,
             'is_socket_connected':is_socket_connected,
+            'group_channel_name':group_channel_name
         })
         
         #     self.tv_device.cec_hdmi_status = text_data_json['data']['hdmi_status']
