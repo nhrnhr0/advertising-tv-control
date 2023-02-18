@@ -72,7 +72,10 @@ class PiDevice(models.Model):
     humanize_socket_status_updated_ago.short_description = 'socket connection updated'
 
     def image_tag(self):
-        return mark_safe(u'<img src="%s" width="150px" height="150px" />' % self.remote_last_image.url)
+        if self.remote_last_image:
+            return mark_safe(u'<img src="%s" width="150px" height="150px" />' % self.remote_last_image.url)
+        else:
+            return ''
 
 # class OpenSocketConnections(models.Model):
 #     device = models.OneToOneField(PiDevice, on_delete=models.CASCADE, primary_key=True, related_name='open_socket_connection')
