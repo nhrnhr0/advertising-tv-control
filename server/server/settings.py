@@ -25,8 +25,8 @@ SECRET_KEY = "django-insecure-598jv2*q+s4$rq3erkbei=9hz3%ozlecn$16zt=*0d-4#9+taw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com', '127.0.0.1', 'office-testing.boost-pop.com', ]
-
+ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com', '127.0.0.1', 'office-testing.boost-pop.com', '52.14.213.58']
+CSRF_TRUSTED_ORIGINS = ['https://gold-tv-server.boost-pop.com',]
 ASGI_APPLICATION = 'server.asgi.application'
 
 CHANNEL_LAYERS = {
