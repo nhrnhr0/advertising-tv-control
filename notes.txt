@@ -1,0 +1,7 @@
+
+
+
+
+# deploy instructions:
+
+https://okbaboularaoui.medium.com/how-to-set-up-django-with-postgres-nginx-and-daphne-django-channels-on-ubuntu-20-04-b0d24dcc7da9

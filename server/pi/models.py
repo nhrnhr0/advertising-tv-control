@@ -48,7 +48,7 @@ class PiDevice(models.Model):
             print(e)
             return False
     
-    def hdmi_cec_off(self):
+    def send_hdmi_cec_off(self):
         try:
             if self.is_socket_connected_live():
                 channel_name = self.group_channel_name
@@ -61,7 +61,7 @@ class PiDevice(models.Model):
             print(e)
             return False
     
-    def hdmi_cec_on(self):
+    def send_hdmi_cec_on(self):
         try:
             if self.is_socket_connected_live():
                 channel_name = self.group_channel_name
@@ -75,7 +75,7 @@ class PiDevice(models.Model):
             return False
         
         
-    def relaunch_kiosk_browser(self):
+    def send_relaunch_kiosk_browser(self):
         try:
             if self.is_socket_connected_live():
                 channel_name = self.group_channel_name
