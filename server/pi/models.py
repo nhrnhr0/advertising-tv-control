@@ -32,8 +32,7 @@ class PiDevice(models.Model):
     def is_socket_connected_live(self):
         return self.group_channel_name is not None
     is_socket_connected_live.short_description = 'socket connected'
-
-    # is_socket_connected_live.boolean = True
+    is_socket_connected_live.boolean = True
 
     def send_reboot(self):
         try:
