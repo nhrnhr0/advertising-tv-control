@@ -30,18 +30,60 @@ class PiDevice(models.Model):
         return self.name or self.device_id
 
     def is_socket_connected_live(self):
-        return self.group_channel_name
-
+        return self.group_channel_name is not None
     is_socket_connected_live.short_description = 'socket connected'
 
     # is_socket_connected_live.boolean = True
 
     def send_reboot(self):
         try:
-            channel_name = 'chat_' + self.device_id
-            from .consumers import send_reboot_to_channel
-            send_reboot_to_channel(channel_name)
-            return True
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_reboot_to_channel
+                send_reboot_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    
+    def hdmi_cec_off(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_hdmi_cec_off_to_channel
+                send_hdmi_cec_off_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    
+    def hdmi_cec_on(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_hdmi_cec_on_to_channel
+                send_hdmi_cec_on_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+        
+        
+    def relaunch_kiosk_browser(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_relaunch_kiosk_browser_to_channel
+                send_relaunch_kiosk_browser_to_channel(channel_name)
+                return True
+            else:
+                return False
         except Exception as e:
             print(e)
             return False
