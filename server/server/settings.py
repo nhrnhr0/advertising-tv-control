@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-598jv2*q+s4$rq3erkbei=9hz3%ozlecn$16zt=*0d-4#9+taw
 DEBUG = True
 
 ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com', '127.0.0.1', 'office-testing.boost-pop.com', '52.14.213.58']
-CSRF_TRUSTED_ORIGINS = ['https://gold-tv-server.boost-pop.com',]
+CSRF_TRUSTED_ORIGINS = ['https://gold-tv-server.boost-pop.com','http://127.0.0.1:5173']
 ASGI_APPLICATION = 'server.asgi.application'
 
 CHANNEL_LAYERS = {
@@ -34,6 +34,7 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000
 # CHANNEL_LAYERS = {
 #     "default": {
 #         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -49,6 +50,7 @@ CHANNEL_LAYERS = {
 
 INSTALLED_APPS = [
     # for channels
+    'corsheaders',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -69,6 +71,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",

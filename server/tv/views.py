@@ -1,8 +1,11 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_exempt
 from .serializers import TvSerializer
-from .models import Tv, Broadcast, BroadcastInTv
+from .models import Tv, Broadcast, BroadcastInTv, playedBroadcast
+import json
 # Create your views here.
 def tv_view(request, id):
     tv_obj = Tv.objects.get(id=id)
@@ -18,3 +21,35 @@ def view_tv_api(request, id):
     info = serializer.data
     return JsonResponse(info, safe=False)
     pass
+
+
+
+import datetime
+@csrf_exempt
+def save_broadcasts_played(request):
+    if request.method == 'POST':
+        data = request.body.decode('utf-8')
+        data = json.loads(data)
+        broadcasts = data['broadcasts']
+        last_broadcast = None
+        
+        added = 0
+        for broadcast in broadcasts:
+            broadcast_id = broadcast['broadcast']
+            tv_display_id = broadcast['tv_display']
+            str_time = broadcast['time'] # 2023-02-20T13:38:41.198Z
+            uuid= broadcast['uuid']
+            time = datetime.datetime.strptime(str_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+            try:
+                obj = playedBroadcast.objects.create(broadcast_id=broadcast_id, tv_id=tv_display_id, time=time, uuid=uuid)
+                last_broadcast = obj
+                added += 1
+            except Exception as e:
+                print(e)
+                pass
+        print('adding broadcasts', len(broadcasts), 'added', added)
+    if last_broadcast:
+        uid = last_broadcast.uuid
+    else:
+        uid = None
+    return JsonResponse({'success':True, 'last_uuid_played':uid}, safe=False)

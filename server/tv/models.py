@@ -90,3 +90,13 @@ class Tv(models.Model):
             return 'Not set'
     pi__humanize_socket_status_updated_ago.short_description = 'last update'
 
+class playedBroadcast(models.Model):
+    uuid = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    tv = models.ForeignKey(Tv, on_delete=models.CASCADE)
+    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE)
+    time = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['-time']
+        unique_together = ('uuid', 'tv', 'broadcast', 'time')
+    def __str__(self):
+        return f'{self.tv.name}: {self.broadcast.name} - {self.time}'
