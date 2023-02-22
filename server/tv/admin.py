@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Tv, Broadcast,BroadcastInTv,playedBroadcast
+from .models import Tv, Broadcast,BroadcastInTv,playedBroadcast,BusinessType
 
 class BroadcastInline(admin.TabularInline):
     model = Tv.broadcasts.through
@@ -28,3 +28,8 @@ admin.site.register(BroadcastInTv, BroadcastInTvAdmin)
 class playedBroadcastAdmin(admin.ModelAdmin):
     list_display = ('id','uuid','tv','broadcast','time',)
 admin.site.register(playedBroadcast, playedBroadcastAdmin)
+
+
+class BusinessTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+admin.site.register(BusinessType, BusinessTypeAdmin)

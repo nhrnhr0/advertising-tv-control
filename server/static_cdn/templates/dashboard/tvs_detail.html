@@ -5,9 +5,252 @@
 
 
 {% extends "dashboard/base.html" %}
+{% load static %}
+
 {% load l10n %}
+{% block headcontent %}
+<!-- TODO: load google maps -->
+{% endblock %}
+
 {% block content %}
+
+    <h2>טלוויזיה: {{tv.name}}</h2>
+    <h4>
+        <a href="/admin/tv/tv/{{tv.id}}/change/" target="_blank">עריכה באדמין</a>
+    </h4>
+    <form action="/dashboard/tvs/{{tv.id}}/edit/" method="POST">
+        {% csrf_token %}
+        <label for="name">שם העסק
+        </label>
+        <input type="text" name="name" id="name" value="{{tv.name}}" required>
+        <label for="address">כתובת
+        </label>
+        <input type="text" name="address" id="address" value="{{tv.address}}" > 
+        <!-- TODO: use google maps api -->
+
+        <label for="businesType">סוגי העסק
+        </label>
+        <!-- multiselect searchable input  -->
+        <select name="businessType" id="businessType" multiple>
+            {% for business_type in business_types %}
+                <option value="{{business_type.id}}" {% if business_type in tv.business_types.all %}selected{% endif %}>{{business_type.name}}</option>
+            {% endfor %}
+        </select>
+        <a href="/admin/tv/businesstype/add/"
+            target="popup"
+            onclick="window.open('/admin/tv/businesstype/add/','popup','width=600,height=600'); return false;">
+            הוספת סוג עסק חדש
+        </a>
+
+        <!-- 
+            רשימה של עסקים לדוגמא:
+            
+            
+            פאב
+            
+         -->
+
+
+
+
+        <h3>שעות פתיחה</h3>
+        <div id="openingHours">
+        {% for opening_hour in tv.opening_hours.all %}
+            <input type="hidden" name="opening_hour_id[]" value="{{opening_hour.id}}">
+            <label for="day_{{opening_hour.id}}">ביום</label>
+            <select name="day_{{opening_hour.id}}" id="day_{{opening_hour.id}}" required>
+                <option value="1" {% if opening_hour.weekday == 1 %}selected{% endif %}>ראשון</option>
+                <option value="2" {% if opening_hour.weekday == 2 %}selected{% endif %}>שני</option>
+                <option value="3" {% if opening_hour.weekday == 3 %}selected{% endif %}>שלישי</option>
+                <option value="4" {% if opening_hour.weekday == 4 %}selected{% endif %}>רביעי</option>
+                <option value="5" {% if opening_hour.weekday == 5 %}selected{% endif %}>חמישי</option>
+                <option value="6" {% if opening_hour.weekday == 6 %}selected{% endif %}>שישי</option>
+                <option value="7" {% if opening_hour.weekday == 7 %}selected{% endif %}>שבת</option>
+            </select>
+            <label for="opening_hour_{{opening_hour.id}}">משעה: </label>
+            <input type="time" name="opening_hour_{{opening_hour.id}}" id="opening_hour_{{opening_hour.id}}" value="{{opening_hour.from_hour|time:'h:i:s'}}" required>
+            <label for="closing_hour_{{opening_hour.id}}"> עד: </label>
+            <input type="time" name="closing_hour_{{opening_hour.id}}" id="closing_hour_{{opening_hour.id}}" value="{{opening_hour.to_hour|time:'h:i:s'}}" required>
+            <input type="checkbox" name="delete_opening_hour_{{opening_hour.id}}" value="false">מחק
+            <br>
+        {% endfor %}
+        </div>
+        <button type="button" onclick="addOpeningHour()">הוסף שעת פתיחה</button>
+
+
+        <!-- broadcasts -->
+        <h3>שידורים</h3>
+        <div id="broadcasts">
+            <!--
+                broadcast fields:  
+                    broadcast__name
+                    broadcast__media
+                    broadcast__media_type
+                    duration
+                    order
+                    active
+            -->
+            <table>
+                <thead>
+                    <th>
+                        #
+                    </th>
+                    <th>
+                        שם השידור
+                    </th>
+                    <th>
+                        מדיה
+                    </th>
+                    <th>
+                        מפרסם
+                    </th>
+                    <th>
+                        משך
+                    </th>
+                    <th>
+                        פעיל
+                    </th>
+                    <th>
+                        כמות שידורים שנישארו
+                    </th>
+                    <th>
+                        פעולות
+                    </th>
+                    <th>
+                        סדר
+                    </th>
+                </thead>
+                
+                <tbody>
+                    {% for broadcast in broadcasts %}
+                        <tr>
+                            <td>
+                                <input type="hidden" name="existing_broadcasts_ids[]" value="{{broadcast.id}}">
+                                <input type="hidden" name="existing_broadcasts_in_tvs_ids[]" value="{{broadcast.broadcast_in_tv.first.id}}">
+                                {{forloop.counter}}
+                            </td>
+                            <td>
+                                {{broadcast.name|truncatechars:20}}
+                            </td>
+                            <td>
+                                {% if broadcast.media_type == 'image' %}
+                                    <div class="imageWrapper">
+                                        <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
+                                    </div>
+                                    תמונה
+                                {% else %}
+                                    <div class="videoWrapper">
+                                    <video muted autoplay loop>
+                                        <source src="{{broadcast.media.url}}" type="video/mp4">
+                                    </video>
+                                </div>
+                                סרטון
+                                {% endif %}
+
+                                
+                            </td>
+                            <td>
+                                {{broadcast.publisher.first.name}}
+                            </td>
+                            <td>
+                                <!-- {{broadcast.broadcast_in_tv.first.duration}} -->
+                                <input type="number" name="broadcast_{{broadcast.id}}_duration" value="{{broadcast.broadcast_in_tv.first.duration}}">
+                            </td>
+                            <td>
+                                <input type="checkbox" name="broadcast_{{broadcast.id}}_active" {% if broadcast.broadcast_in_tv.first.active %}checked{% endif %}>
+                                <!-- {% if broadcast.broadcast_in_tv.first.active %}
+                                    כן
+                                {% else %}
+                                    לא
+                                {% endif %} -->
+                            </td>
+                            <td>
+                                {{broadcast.broadcast_in_tv.first.plays_left}}
+                            </td>
+                            <td>
+                                <a href="/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/delete/"
+                                target="popup" 
+                                onclick="window.open('/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/delete/','popup','width=600,height=600'); return false;"
+                                >מחק</a>
+                                <a href="/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/change/"
+                                target="popup" 
+                                onclick="window.open('/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/change/','popup','width=600,height=600'); return false;"
+                                >ערוך</a>
+                                <button type="button" onclick="changeLeftPlays({{broadcast.broadcast_in_tv.first.id}})">
+                                    שנה כמות שידורים שנישארו
+                                </button>
+                            </td>
+                            <td>
+                                <input type="number" name="broadcast_{{broadcast.id}}_order" value="{{broadcast.broadcast_in_tv.first.order}}">
+                            </td>
+                        </tr>
+                    {% endfor %}
+            </table>
+        </div>
+        <input type="submit" value="שמור">
+        <h3>הוספת שידור</h3>
+        <!-- 
+            autocomplete select for the publishers
+            based on the selected publishers, the broadcasts will be shown down and the user will be able to select the broadcast he wants to add to the tv
+        -->
+        <label for="publisher">מפרסם</label>
+        <select name="publisher" id="publisher" onchange="getBroadcasts()">
+            <option value="">בחר מפרסם</option>
+            {% for publisher in publishers %}
+                <option value="{{publisher.id}}">{{publisher.name}}</option>
+            {% endfor %}
+        </select>
+        <label for="broadcast_select">בחר שידור</label>
+        <div id="broadcast_select">
+        </div>
+
+        
+        
+    </form>
+
+
 <script type="text/javascript">
+        function init_maps_autocomplete() {
+            debugger;
+                var input = document.getElementById('address');
+                var autocomplete = new google.maps.places.Autocomplete(input);
+            }
+
+            google.maps.event.addDomListener(window, 'load', init_maps_autocomplete);
+    function changeLeftPlays(broadcast_in_tv_id) {
+        let plays_count = prompt("הכנס מספר הצגות להוספה (יכול להיות מינוס להורדה)", "0");
+        if (plays_count == null || plays_count == "") {
+            return;
+        }
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/dashboard/tvs/{{tv.id}}/change_left_plays/', true);
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function () {
+            if (this.status == 200) {
+                location.reload();
+            }
+        };
+        xhr.send('broadcast_in_tv_id=' + broadcast_in_tv_id + '&plays_count=' + plays_count);
+    }
+
+    function addBroadcast(broadcast_id) {
+        let plays_count = prompt("הכנס מספר הצגות", "1000");
+        if (plays_count == null || plays_count == "") {
+            return;
+        }
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '/dashboard/tvs/{{tv.id}}/add_broadcast/', true);
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function () {
+            if (this.status == 200) {
+                location.reload();
+            }
+        };
+        xhr.send('broadcast_id=' + broadcast_id + '&plays_count=' + plays_count);
+    }
+
     function addOpeningHour(e) {
         var openingHours = document.querySelector('#openingHours');
         var openingHour = document.createElement('label');
@@ -85,154 +328,78 @@
     }
 
     function getBroadcasts() {
-        
+        var xhr = new XMLHttpRequest();
+        let publisherId = document.querySelector('#publisher').value;
+        if (publisherId == '') {
+            publisherId = 'all';
+        }
+        xhr.open('GET', '/dashboard/publishers/'+publisherId+'/broadcasts/', true);
+        xhr.onload = function() {
+            if (this.status == 200) {
+                var broadcasts = JSON.parse(this.responseText);
+                var broadcastsSelect = document.querySelector('#broadcast_select');
+                broadcastsSelect.innerHTML = '';
+                let existing_broadcasts_ids = [];
+                let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
+                for (var i = 0; i < ids_inputs.length; i++) {
+                    existing_broadcasts_ids.push(ids_inputs[i].value);
+                }
+                for (var i = 0; i < broadcasts.length; i++) {
+                    if(existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
+                        continue;
+                    }
+                    let card = `<div class="broadcast-card"><h3>${broadcasts[i].name}</h3>`
+                    if (broadcasts[i].media_type == 'video') {
+                        card += `<div class="videoWrapper"><video src="${broadcasts[i].media}" muted loop autoplay></video></div>`
+                    } else {
+                        card += `<div class="imageWrapper"><img src="${broadcasts[i].media}" /></div>`
+                    }
+                    // add publisher name and id if exists
+                    if (broadcasts[i].publisher && broadcasts[i].publisher.length > 0) {
+                        let publisher = broadcasts[i].publisher[0];
+                        card += `<p>מפרסם:
+                            <a href="/dashboard/publishers/${publisher.id}/"
+                             target="popup"
+                            onclick="window.open('/dashboard/publishers/${publisher.id}/','popup','width=850,height=850'); return false;"
+                            >
+                             ${publisher.name}
+                            </a>
+                             </p>`
+                    }
+                    card += `<button type="button" onclick="addBroadcast(${broadcasts[i].id})">הוסף לטלוויזיה</button></div>`
+                    broadcastsSelect.innerHTML += card;
+                }
+            }
+        }
+        xhr.send();
     }
+    getBroadcasts();
 </script>
-
-</script>
-    <h2>טלוויזיה: {{tv.name}}</h2>
-    <h4>
-        <a href="/admin/tv/tv/{{tv.id}}/change/" target="_blank">עריכה באדמין</a>
-    </h4>
-    <form action="/dashboard/tvs/{{tv.id}}/edit/" method="POST">
-        {% csrf_token %}
-        <label for="name">שם הטלוויזיה</label>
-        <input type="text" name="name" id="name" value="{{tv.name}}" required>
-
-        <!-- 
-            opening hours
-         -->
-        <h3>שעות פתיחה</h3>
-        <div id="openingHours">
-        {% for opening_hour in tv.opening_hours.all %}
-            <input type="hidden" name="opening_hour_id[]" value="{{opening_hour.id}}">
-            <label for="day_{{opening_hour.id}}">ביום</label>
-            <select name="day_{{opening_hour.id}}" id="day_{{opening_hour.id}}" required>
-                <option value="1" {% if opening_hour.weekday == 1 %}selected{% endif %}>ראשון</option>
-                <option value="2" {% if opening_hour.weekday == 2 %}selected{% endif %}>שני</option>
-                <option value="3" {% if opening_hour.weekday == 3 %}selected{% endif %}>שלישי</option>
-                <option value="4" {% if opening_hour.weekday == 4 %}selected{% endif %}>רביעי</option>
-                <option value="5" {% if opening_hour.weekday == 5 %}selected{% endif %}>חמישי</option>
-                <option value="6" {% if opening_hour.weekday == 6 %}selected{% endif %}>שישי</option>
-                <option value="7" {% if opening_hour.weekday == 7 %}selected{% endif %}>שבת</option>
-            </select>
-            <label for="opening_hour_{{opening_hour.id}}">משעה: </label>
-            <input type="time" name="opening_hour_{{opening_hour.id}}" id="opening_hour_{{opening_hour.id}}" value="{{opening_hour.from_hour|time:'h:i:s'}}" required>
-            <label for="closing_hour_{{opening_hour.id}}"> עד: </label>
-            <input type="time" name="closing_hour_{{opening_hour.id}}" id="closing_hour_{{opening_hour.id}}" value="{{opening_hour.to_hour|time:'h:i:s'}}" required>
-            <input type="checkbox" name="delete_opening_hour_{{opening_hour.id}}" value="false">מחק
-            <br>
-        {% endfor %}
-        </div>
-        <button type="button" onclick="addOpeningHour()">הוסף שעת פתיחה</button>
-
-
-        <!-- broadcasts -->
-        <h3>שידורים</h3>
-        <div id="broadcasts">
-            <!--
-                broadcast fields:  
-                    broadcast__name
-                    broadcast__media
-                    broadcast__media_type
-                    duration
-                    order
-                    active
-            -->
-            <table>
-                <thead>
-                    <th>
-                        #
-                    </th>
-                    <th>
-                        שם השידור
-                    </th>
-                    <th>
-                        מדיה
-                    </th>
-                    <th>
-                        משך
-                    </th>
-                    <th>
-                        פעיל
-                    </th>
-                    <th>
-                        פעולות
-                    </th>
-                </thead>
-                
-                <tbody>
-                    {% for broadcast in broadcasts %}
-                        <tr>
-                            <td>
-                                {{forloop.counter}}
-                            </td>
-                            <td>
-                                {{broadcast.name|truncatechars:20}}
-                            </td>
-                            <td>
-                                {% if broadcast.media_type == 'image' %}
-                                    <div class="imageWrapper">
-                                        <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
-                                    </div>
-                                {% else %}
-                                    <div class="videoWrapper">
-                                    <video muted autoplay loop>
-                                        <source src="{{broadcast.media.url}}" type="video/mp4">
-                                    </video>
-                                </div>
-                                {% endif %}
-
-                                
-                            </td>
-                            <td>
-                                <!-- {{broadcast.broadcast_in_tv.first.duration}} -->
-                                <input type="number" name="broadcast_{{broadcast.id}}_duration" value="{{broadcast.broadcast_in_tv.first.duration}}">
-                            </td>
-                            <td>
-                                <input type="checkbox" name="broadcast_{{broadcast.id}}_active" {% if broadcast.broadcast_in_tv.first.active %}checked{% endif %}>
-                                <!-- {% if broadcast.broadcast_in_tv.first.active %}
-                                    כן
-                                {% else %}
-                                    לא
-                                {% endif %} -->
-                            </td>
-                            <td>
-                                <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/">מחק</a>
-                                <a href="/admin/tv/broadcast/{{broadcast.id}}/change/">ערוך</a>
-                                
-                            </td>
-                        </tr>
-                    {% endfor %}
-            </table>
-        </div>
-
-        <h3>הוספת שידור</h3>
-        <!-- 
-            autocomplete select for the publishers
-            based on the selected publishers, the broadcasts will be shown down and the user will be able to select the broadcast he wants to add to the tv
-        -->
-        <label for="publisher">מפרסם</label>
-        <select name="publisher" id="publisher" onchange="getBroadcasts()">
-            <option value="">בחר מפרסם</option>
-            {% for publisher in publishers %}
-                <option value="{{publisher.id}}">{{publisher.name}}</option>
-            {% endfor %}
-        </select>
-        <label for="broadcast">שידור</label>
-        <select name="broadcast" id="broadcast">
-            <option value="">בחר שידור</option>
-        </select>
-        <button type="button" onclick="addBroadcast()">הוסף שידור</button>
-
-
-        <input type="submit" value="שמור">
-        
-    </form>
-
-
 
     <style>
-        
+        #broadcast_select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 92%;
+            margin: auto;
+        }
+        .broadcast-card {
+            width: 300px;
+            height: 300px;
+            background: #f3f3f3;
+            padding:10px;
+            box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+        }
+        .broadcast-card:hover {
+            box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+        }
+        .broadcast-card h3 {
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1;
+        }
     </style>
 {% endblock %}
