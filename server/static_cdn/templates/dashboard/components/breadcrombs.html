@@ -1,0 +1,21 @@
+
+
+<div class="breadcrombs">
+    <a href="/dashboard/">דף ניהול</a>
+    {% if '/dashboard/publishers/' in request.path %}
+        <span>></span>
+        <a href="/dashboard/publishers/">מפרסמים</a>
+        {% if publisher.id %}
+            <span>></span>
+            <a href="/dashboard/publishers/{{publisher.id}}/">{{publisher.name}}</a>
+        {% endif %}
+    {% endif %}
+    {% if '/dashboard/tvs/'  in request.path %}
+        <span>></span>
+        <a href="/dashboard/tvs/">טלוויזיות</a>
+        {% if tv.id %}
+            <span>></span>
+            <a href="/dashboard/tvs/{{tv.id}}/">{{tv.name}}</a>
+        {% endif %}
+    {% endif %}
+</div>

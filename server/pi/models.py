@@ -72,8 +72,7 @@ class PiDevice(models.Model):
         except Exception as e:
             print(e)
             return False
-        
-        
+    
     def send_relaunch_kiosk_browser(self):
         try:
             if self.is_socket_connected_live():
@@ -94,14 +93,6 @@ class PiDevice(models.Model):
         else:
             return ''
 
-    # def save(self, *args, **kwargs):
-    #     try:
-    #         this = TvDevice.objects.get(id=self.id)
-    #         if this.remote_last_image != self.remote_last_image:
-    #             this.remote_last_image.delete()
-    #     except: pass
-    #     super(TvDevice, self).save(*args, **kwargs)
-
     def humanize_remote_status_updated_ago(self):
         return humanize.naturaltime(timezone.now() - self.remote_status_updated)
 
@@ -118,11 +109,3 @@ class PiDevice(models.Model):
         else:
             return ''
 
-# class OpenSocketConnections(models.Model):
-#     device = models.OneToOneField(PiDevice, on_delete=models.CASCADE, primary_key=True, related_name='open_socket_connection')
-#     channel_name = models.CharField(max_length=100, null=True)
-#     def __str__(self):
-#         return self.device.name or self.device.device_id
-
-#     def get_device_uid(self):
-#         return self.device.device_id

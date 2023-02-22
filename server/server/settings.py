@@ -63,8 +63,10 @@ INSTALLED_APPS = [
     # "daphne",  # for channels
     "channels",
     # my apps
+    'core',
     'tv',
     'pi',
+    
 
 ]
 

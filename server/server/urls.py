@@ -18,12 +18,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from tv.views import save_broadcasts_played
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    path('login/', auth_views.LoginView.as_view(), name='login'),
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('tv/', include('tv.urls')),
     path('api/broadcasts-played/', save_broadcasts_played, name='save_broadcasts_played'),
+    path('dashboard/', include('dashboard.urls')),
 ]
 
 

@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %} 
+
+
+{% block content %}
+    <!-- show all_publishers as links to their dashboard and option to add new publisher -->
+    <h2>מפרסמים</h2>
+    <ul>
+        {% for publisher in all_publishers %}
+            <li><a href="/dashboard/publishers/{{publisher.id}}">{{publisher.name}}</a></li>
+        {% endfor %}
+    </ul>
+    <!-- <a href="/dashboard/publishers/add" >הוסף מפרסם חדש</a> -->
+    {% include "dashboard/components/new_publisher.html" %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "dashboard/base.html" %} 
+
+
+{% block content %}
+    <!-- show all_publishers as links to their dashboard and option to add new publisher -->
+    <h2>טלוויזיות</h2>
+    <ul>
+        {% for tv in all_tvs %}
+            <li><a href="/dashboard/tvs/{{tv.id}}">{{tv.name}}</a></li>
+        {% endfor %}
+    </ul>
+    {% include "dashboard/components/new_tv.html" %}
+
+{% endblock %}

@@ -1,0 +1,238 @@
+
+
+
+
+
+
+{% extends "dashboard/base.html" %}
+{% load l10n %}
+{% block content %}
+<script type="text/javascript">
+    function addOpeningHour(e) {
+        var openingHours = document.querySelector('#openingHours');
+        var openingHour = document.createElement('label');
+        openingHour.setAttribute('for', 'new_day[]');
+        openingHour.innerHTML = 'ביום ';
+        openingHours.appendChild(openingHour);
+
+        var openingHourSelect = document.createElement('select');
+        openingHourSelect.setAttribute('name', 'new_day[]');
+        openingHourSelect.setAttribute('id', 'day_' + (openingHours.childElementCount + 1));
+        
+        openingHours.appendChild(openingHourSelect);
+
+        var openingHourOption1 = document.createElement('option');
+        openingHourOption1.setAttribute('value', '1');
+        openingHourOption1.innerHTML = 'ראשון';
+        openingHourSelect.appendChild(openingHourOption1);
+
+        var openingHourOption2 = document.createElement('option');
+        openingHourOption2.setAttribute('value', '2');
+        openingHourOption2.innerHTML = 'שני';
+        openingHourSelect.appendChild(openingHourOption2);
+
+        var openingHourOption3 = document.createElement('option');
+        openingHourOption3.setAttribute('value', '3');
+        openingHourOption3.innerHTML = 'שלישי';
+        openingHourSelect.appendChild(openingHourOption3);
+
+        var openingHourOption4 = document.createElement('option');
+        openingHourOption4.setAttribute('value', '4');
+        openingHourOption4.innerHTML = 'רביעי';
+        openingHourSelect.appendChild(openingHourOption4);
+
+        var openingHourOption5 = document.createElement('option');
+        openingHourOption5.setAttribute('value', '5');
+        openingHourOption5.innerHTML = 'חמישי';
+        openingHourSelect.appendChild(openingHourOption5);
+
+        var openingHourOption6 = document.createElement('option');
+        openingHourOption6.setAttribute('value', '6');
+        openingHourOption6.innerHTML = 'שישי';
+        openingHourSelect.appendChild(openingHourOption6);
+
+        var openingHourOption7 = document.createElement('option');
+        openingHourOption7.setAttribute('value', '7');
+        openingHourOption7.innerHTML = 'שבת';
+        openingHourSelect.appendChild(openingHourOption7);
+
+        var openingHourLabel = document.createElement('label');
+        openingHourLabel.setAttribute('for', 'new_opening_hour[]');
+        openingHourLabel.innerHTML = ' משעה: '
+        openingHours.appendChild(openingHourLabel);
+        
+        var openingHourInput = document.createElement('input');
+        openingHourInput.setAttribute('type', 'time');
+        openingHourInput.setAttribute('name', 'new_opening_hour[]');
+        openingHourInput.setAttribute('id', 'opening_hour_' + (openingHours.childElementCount + 1));
+        
+        openingHours.appendChild(openingHourInput);
+        
+        var closingHourLabel = document.createElement('label');
+        closingHourLabel.setAttribute('for', 'new_opening_hour');
+        closingHourLabel.innerHTML = ' עד: ';
+        openingHours.appendChild(closingHourLabel);
+        
+        var closingHourInput = document.createElement('input');
+        closingHourInput.setAttribute('type', 'time');
+        closingHourInput.setAttribute('name', 'new_closing_hour[]');
+        closingHourInput.setAttribute('id', 'closing_hour_' + (openingHours.childElementCount + 1));
+        
+        openingHours.appendChild(closingHourInput);
+        
+        var br = document.createElement('br');
+        openingHours.appendChild(br);
+    }
+
+    function getBroadcasts() {
+        
+    }
+</script>
+
+</script>
+    <h2>טלוויזיה: {{tv.name}}</h2>
+    <h4>
+        <a href="/admin/tv/tv/{{tv.id}}/change/" target="_blank">עריכה באדמין</a>
+    </h4>
+    <form action="/dashboard/tvs/{{tv.id}}/edit/" method="POST">
+        {% csrf_token %}
+        <label for="name">שם הטלוויזיה</label>
+        <input type="text" name="name" id="name" value="{{tv.name}}" required>
+
+        <!-- 
+            opening hours
+         -->
+        <h3>שעות פתיחה</h3>
+        <div id="openingHours">
+        {% for opening_hour in tv.opening_hours.all %}
+            <input type="hidden" name="opening_hour_id[]" value="{{opening_hour.id}}">
+            <label for="day_{{opening_hour.id}}">ביום</label>
+            <select name="day_{{opening_hour.id}}" id="day_{{opening_hour.id}}" required>
+                <option value="1" {% if opening_hour.weekday == 1 %}selected{% endif %}>ראשון</option>
+                <option value="2" {% if opening_hour.weekday == 2 %}selected{% endif %}>שני</option>
+                <option value="3" {% if opening_hour.weekday == 3 %}selected{% endif %}>שלישי</option>
+                <option value="4" {% if opening_hour.weekday == 4 %}selected{% endif %}>רביעי</option>
+                <option value="5" {% if opening_hour.weekday == 5 %}selected{% endif %}>חמישי</option>
+                <option value="6" {% if opening_hour.weekday == 6 %}selected{% endif %}>שישי</option>
+                <option value="7" {% if opening_hour.weekday == 7 %}selected{% endif %}>שבת</option>
+            </select>
+            <label for="opening_hour_{{opening_hour.id}}">משעה: </label>
+            <input type="time" name="opening_hour_{{opening_hour.id}}" id="opening_hour_{{opening_hour.id}}" value="{{opening_hour.from_hour|time:'h:i:s'}}" required>
+            <label for="closing_hour_{{opening_hour.id}}"> עד: </label>
+            <input type="time" name="closing_hour_{{opening_hour.id}}" id="closing_hour_{{opening_hour.id}}" value="{{opening_hour.to_hour|time:'h:i:s'}}" required>
+            <input type="checkbox" name="delete_opening_hour_{{opening_hour.id}}" value="false">מחק
+            <br>
+        {% endfor %}
+        </div>
+        <button type="button" onclick="addOpeningHour()">הוסף שעת פתיחה</button>
+
+
+        <!-- broadcasts -->
+        <h3>שידורים</h3>
+        <div id="broadcasts">
+            <!--
+                broadcast fields:  
+                    broadcast__name
+                    broadcast__media
+                    broadcast__media_type
+                    duration
+                    order
+                    active
+            -->
+            <table>
+                <thead>
+                    <th>
+                        #
+                    </th>
+                    <th>
+                        שם השידור
+                    </th>
+                    <th>
+                        מדיה
+                    </th>
+                    <th>
+                        משך
+                    </th>
+                    <th>
+                        פעיל
+                    </th>
+                    <th>
+                        פעולות
+                    </th>
+                </thead>
+                
+                <tbody>
+                    {% for broadcast in broadcasts %}
+                        <tr>
+                            <td>
+                                {{forloop.counter}}
+                            </td>
+                            <td>
+                                {{broadcast.name|truncatechars:20}}
+                            </td>
+                            <td>
+                                {% if broadcast.media_type == 'image' %}
+                                    <div class="imageWrapper">
+                                        <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
+                                    </div>
+                                {% else %}
+                                    <div class="videoWrapper">
+                                    <video muted autoplay loop>
+                                        <source src="{{broadcast.media.url}}" type="video/mp4">
+                                    </video>
+                                </div>
+                                {% endif %}
+
+                                
+                            </td>
+                            <td>
+                                <!-- {{broadcast.broadcast_in_tv.first.duration}} -->
+                                <input type="number" name="broadcast_{{broadcast.id}}_duration" value="{{broadcast.broadcast_in_tv.first.duration}}">
+                            </td>
+                            <td>
+                                <input type="checkbox" name="broadcast_{{broadcast.id}}_active" {% if broadcast.broadcast_in_tv.first.active %}checked{% endif %}>
+                                <!-- {% if broadcast.broadcast_in_tv.first.active %}
+                                    כן
+                                {% else %}
+                                    לא
+                                {% endif %} -->
+                            </td>
+                            <td>
+                                <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/">מחק</a>
+                                <a href="/admin/tv/broadcast/{{broadcast.id}}/change/">ערוך</a>
+                                
+                            </td>
+                        </tr>
+                    {% endfor %}
+            </table>
+        </div>
+
+        <h3>הוספת שידור</h3>
+        <!-- 
+            autocomplete select for the publishers
+            based on the selected publishers, the broadcasts will be shown down and the user will be able to select the broadcast he wants to add to the tv
+        -->
+        <label for="publisher">מפרסם</label>
+        <select name="publisher" id="publisher" onchange="getBroadcasts()">
+            <option value="">בחר מפרסם</option>
+            {% for publisher in publishers %}
+                <option value="{{publisher.id}}">{{publisher.name}}</option>
+            {% endfor %}
+        </select>
+        <label for="broadcast">שידור</label>
+        <select name="broadcast" id="broadcast">
+            <option value="">בחר שידור</option>
+        </select>
+        <button type="button" onclick="addBroadcast()">הוסף שידור</button>
+
+
+        <input type="submit" value="שמור">
+        
+    </form>
+
+
+
+    <style>
+        
+    </style>
+{% endblock %}

@@ -6,11 +6,16 @@ from .models import Tv, Broadcast,BroadcastInTv,playedBroadcast
 class BroadcastInline(admin.TabularInline):
     model = Tv.broadcasts.through
     extra = 1
+    
+class openingHoursInline(admin.TabularInline):
+    from core.models import TvOpeningHours
+    model = TvOpeningHours
+    extra = 1
 
 # Tv admin
 class TvAdmin(admin.ModelAdmin):
     list_display = ('name', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__is_socket_connected_live', 'pi__humanize_socket_status_updated_ago',)
-    inlines = [BroadcastInline]
+    inlines = [BroadcastInline, openingHoursInline]
 admin.site.register(Tv, TvAdmin)
 class BroadcastAdmin(admin.ModelAdmin):
     list_display = ('name','media_type', 'created', 'updated',)

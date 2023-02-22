@@ -10,10 +10,11 @@ class Broadcast(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     media = models.FileField(upload_to='broadcasts/', blank=True, null=True)
     media_type = models.CharField(max_length=100, blank=True, null=True)
+    
     def __str__(self):
-        return self.name
+        return self.name or 'error'
     def save(self,*args, **kwargs):
-        if not self.name:
+        if not self.name or self.name == '':
             self.name = self.media.name
         if not self.media_type and self.media:
             url = self.media.url
@@ -31,7 +32,7 @@ class Broadcast(models.Model):
 
 class BroadcastInTv(models.Model):
     tv = models.ForeignKey('Tv', on_delete=models.CASCADE)
-    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE)
+    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE, related_name='broadcast_in_tv')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     duration = models.FloatField(default=20.0)
@@ -43,7 +44,7 @@ class BroadcastInTv(models.Model):
     def __str__(self):
         return f'{self.broadcast.name}: {self.duration}'
     class Meta:
-        ordering = ['order']
+        ordering = ['order',]
         
 # Create your models here.
 class Tv(models.Model):

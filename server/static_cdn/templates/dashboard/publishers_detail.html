@@ -1,0 +1,81 @@
+{% extends "dashboard/base.html" %}
+{% load l10n %}
+{% block content %}
+<!-- show the details of the publishers (name and broadcasts) -->
+<h2>מפרסם: {{publisher.name}}</h2>
+<form action="/dashboard/publishers/{{publisher.id}}/edit/" method="POST">
+    {% csrf_token %}
+    <label for="name">שם המפרסם</label>
+    <input type="text" name="name" id="name" value="{{publisher.name}}">
+    <input type="submit" value="עדכן">
+</form>
+{% include "dashboard/components/new_broadcast.html" %}
+<h3>שידורים קיימים</h3>
+<table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>מדיה</th>
+            <th>שם השידור</th>
+            <th>נוצר ב</th>
+            <th>סוג השידור</th>
+            <th>פעולות</th>
+            <th>טלוויזיות</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for broadcast in publisher.broadcasts.all %}
+        <tr>
+            <td>{{broadcast.id}}</td>
+            <td>
+                {% if broadcast.media_type == 'image' %}
+                <div class="imageWrapper">
+                    <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
+                </div>
+                {% elif broadcast.media_type == 'video' %}
+                <div class="videoWrapper">
+                    <video muted autoplay loop>
+                        <source src="{{broadcast.media.url}}" type="video/mp4">
+                    </video>
+                </div>
+                {% endif %}
+            </td>
+            <td title="{{broadcast.media.url}}">{{broadcast.name|truncatechars:20}}</td>
+            <td>
+                <script type="text/javascript">
+                    var date = `{{broadcast.created|date:"c"}}`
+                    date = new Date(date);
+                    document.write(date.toLocaleString('he-IL', {
+                        timeZone: 'Asia/Jerusalem'
+                    }));
+                </script>
+            </td>
+            <td>{{broadcast.media_type}}</td>
+
+            <td>
+                <a href="/admin/tv/broadcast/{{broadcast.id}}/change/" target="popup"
+                    onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/change/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">ערוך</a>
+                <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/" target="popup"
+                    onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a>
+            </td>
+            <td>
+                {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
+                <span>{{broad_in_tv.tv}}</span>
+                {% empty %}
+                <span>לא פעיל בשום טלוויזיה</span>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- <a href="/dashboard/publishers/{{publisher.id}}/broadcasts/add">הוסף שידור חדש</a> -->
+<style>
+
+
+
+    
+
+</style>
+{% endblock %}
