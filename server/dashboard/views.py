@@ -149,11 +149,12 @@ def tvs_detail_add_broadcast(request, id):
         plays = request.POST.get('plays_count')
         if not plays:
             plays = 0
-        temp = tv.broadcasts.order_by('-broadcast_in_tv__order').first()
-        if temp:
-            order = temp.broadcast_in_tv.first().order + 10
-        else:
-            order = 0
+        # temp = tv.broadcasts.order_by('-broadcast_in_tv__order').first()
+        from django.db.models import Max
+        max_order = tv.broadcasts.all().aggregate(Max('broadcast_in_tv__order'))['broadcast_in_tv__order__max']
+        if max_order == None:
+            max_order = 0
+        order = max_order + 10
         tv.broadcasts.add(broadcast, through_defaults={'plays_left': plays, 'active': False, 'order': order})
         tv.save()
         return redirect('dashboard_tvs_detail', id=id)
@@ -176,17 +177,65 @@ def tvs_detail_change_left_plays(request, id):
         return redirect('dashboard_tvs_detail', id=id)
     return redirect('dashboard_tvs_detail', id=id)
 
-
 def tvs_detail_edit(request, id):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('login', next=request.path)
     tv = Tv.objects.get(id=id)
     if request.method == 'POST':
+        # request.POST: 'qr_link':'https://ms-global.co.il''new_day[]':'1''new_opening_hour[]':'06:00''new_closing_hour[]':'18:00''existing_broadcasts_ids[]':'4''existing_broadcasts_in_tvs_ids[]':'45''broadcast_2_duration':'2''broadcast_2_order':'35''broadcast_3_duration':'20.0''broadcast_3_order':'25''broadcast_11_duration':'10.0''broadcast_11_active':'on''broadcast_11_order':'55''broadcast_4_duration':'20.0''broadcast_4_order':'65''publisher':''
+        # saving tv name and basic info
         tv_name = request.POST.get('name')
         tv.name = tv_name
-        # get all the 
-        # day_XXX opening_hour_XXX closing_hour_XXX from the form and save them to the tv
+        
+        tv.address = request.POST.get('address')
+        
+        # save business types add/remove
+        businessTypeIds = request.POST.getlist('businessType')
+        for businessTypeId in businessTypeIds:
+            businessType = BusinessType.objects.get(id=businessTypeId)
+            if businessType not in tv.buisness_types.all():
+                tv.buisness_types.add(businessType)
+        for businessType in tv.buisness_types.all():
+            if str(businessType.id) not in businessTypeIds:
+                tv.buisness_types.remove(businessType)
+        
+        # logo
+        logo = request.FILES.get('logo', None)
+        phone = request.POST.get('phone', None)
+        email = request.POST.get('email', None)
+        contact_name = request.POST.get('contact_name', None)
+        contact_phone = request.POST.get('contact_phone' , None)
+        if logo:
+            tv.logo = logo
+        if phone:
+            tv.phone = phone
+        if email:
+            tv.email = email
+        if contact_name:
+            tv.contact_name = contact_name
+        if contact_phone:
+            tv.contact_phone = contact_phone
+        
+
+        
+
+        new_what_not_to_show = request.POST.get('not_to_show_list',None)
+        new_what_to_show = request.POST.get('yes_to_show_list',None)
+        
+        from tv.models import ContentWithHistory
+        if new_what_not_to_show:
+            tv.not_to_show_list.add(ContentWithHistory.objects.create(content=new_what_not_to_show,
+            content_type=ContentWithHistory.NOT_TO_SHOW
+            ))
+        if new_what_to_show:
+            tv.yes_to_show_list.add(ContentWithHistory.objects.create(content=new_what_to_show,
+            content_type=ContentWithHistory.YES_TO_SHOW
+            ))
+        
+        
+        
+        # save opening hours
         opening_hours_ids = request.POST.getlist('opening_hour_id[]')
         for opening_hours_id in opening_hours_ids:
             opening_hour = request.POST.get('opening_hour_'+opening_hours_id)
@@ -202,7 +251,6 @@ def tvs_detail_edit(request, id):
                 obj.weekday = day
                 obj.save()
 
-        
         new_opening = request.POST.getlist('new_opening_hour[]')
         new_closing = request.POST.getlist('new_closing_hour[]')
         new_days = request.POST.getlist('new_day[]')
@@ -212,12 +260,7 @@ def tvs_detail_edit(request, id):
                 tv.opening_hours.create(from_hour=new_opening[i], to_hour=new_closing[i], weekday=new_days[i])
         
         
-        # <input type="hidden" name="existing_broadcasts_ids[]" value="{{broadcast.id}}">
-        # <input type="number" name="broadcast_{{broadcast.id}}_duration" value="{{broadcast.broadcast_in_tv.first.duration}}">
-        # <input type="checkbox" name="broadcast_{{broadcast.id}}_active" {% if broadcast.broadcast_in_tv.first.active %}checked{% endif %}>
-        # <input type="number" name="broadcast_{{broadcast.id}}_order" value="{{broadcast.broadcast_in_tv.first.order}}">
-
-        # existing_broadcasts_in_tvs_ids = request.POST.getlist('existing_broadcasts_in_tvs_ids[]')
+        # saving table information
         existing_broadcasts_ids = request.POST.getlist('existing_broadcasts_ids[]')
         for existing_b_id in existing_broadcasts_ids:
             duration = request.POST.get('broadcast_'+existing_b_id+'_duration')

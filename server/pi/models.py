@@ -93,12 +93,9 @@ class PiDevice(models.Model):
         else:
             return ''
 
-    def humanize_remote_status_updated_ago(self):
-        return humanize.naturaltime(timezone.now() - self.remote_status_updated)
-
-    humanize_remote_status_updated_ago.short_description = 'status updated'
 
     def humanize_socket_status_updated_ago(self):
+        # in hebrew
         return humanize.naturaltime(timezone.now() - self.socket_status_updated)
 
     humanize_socket_status_updated_ago.short_description = 'socket connection updated'

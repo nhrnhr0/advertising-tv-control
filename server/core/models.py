@@ -41,11 +41,11 @@ class TvOpeningHours(models.Model):
     weekday = models.IntegerField(_('Weekday'), choices=WEEKDAYS)
     from_hour = models.TimeField(_('Opening'))
     to_hour = models.TimeField(_('Closing'))
-
+    def get_weekday_display(self):
+        return dict(WEEKDAYS)[self.weekday]
     def __str__(self):
-        return _("%(premises)s %(weekday)s (%(from_hour)s - %(to_hour)s)") % {
-            'premises': self.tv,
-            'weekday': self.weekday,
+        return _("%(weekday)s (%(from_hour)s - %(to_hour)s)") % {
+            'weekday': self.get_weekday_display(),
             'from_hour': self.from_hour,
             'to_hour': self.to_hour
         }

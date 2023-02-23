@@ -80,8 +80,17 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
+TIME_INPUT_FORMATS = [
+    '%H:%M:%S',     # '14:30:59'
+    '%H:%M:%S.%f',  # '14:30:59.000200'
+    '%H:%M',        # '14:30'
+]
+USE_L10N = True
 ROOT_URLCONF = "server.urls"
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 TEMPLATES = [
     {
@@ -151,8 +160,8 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(STATIC_ROOT, 'media_root/')
 
-# LANGUAGE_CODE = 'he'
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'he'
+# LANGUAGE_CODE = 'en-us'
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
