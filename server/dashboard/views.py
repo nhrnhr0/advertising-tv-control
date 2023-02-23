@@ -1,8 +1,14 @@
 from django.shortcuts import render, redirect
 # Create your views here.
 from core.models import Publisher
+from dashboard.serializers import PublisherAssetsSerializer
 from tv.models import BusinessType
+from django.conf import settings
+from django.http import JsonResponse
+from django.core import serializers
 
+from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 def main_dashboard_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('login', next=request.path)
@@ -64,13 +70,26 @@ def dashboard_publishers_detail_add_broadcast(request, id):
         
         # create and save the broadcast to the publisher
         broadcast_name = request.POST.get('name')
-        media = request.FILES.get('media')
-        if not media:
-            return redirect('dashboard_publishers_detail_edit', id=id)
-        broadcast = Broadcast.objects.create(name=broadcast_name, media=media)
-        broadcast.save()
-        publisher.broadcasts.add(broadcast)
-        publisher.save()
+        medias = request.FILES.getlist('media')
+        # if not media:
+        #     return redirect('dashboard_publishers_detail_edit', id=id)
+        # broadcast = Broadcast.objects.create(name=broadcast_name, media=media)
+        # broadcast.save()
+        # publisher.broadcasts.add(broadcast)
+        # publisher.save()
+        
+        for media in medias:
+            if broadcast_name == '':
+                bname = media.name
+            else:
+                if len(medias) == 1:
+                    bname = broadcast_name
+                else:
+                    bname = broadcast_name + '_' + media.name
+            broadcast = Broadcast.objects.create(name=bname, media=media)
+            broadcast.save()
+            publisher.broadcasts.add(broadcast)
+            publisher.save()
         return redirect('dashboard_publishers_detail_edit', id=id)
     context = {
         'publisher': publisher
@@ -78,25 +97,47 @@ def dashboard_publishers_detail_add_broadcast(request, id):
     return render(request, 'dashboard/publishers_detail_add_broadcast.html', context)
 
 
-from django.http import JsonResponse
-from django.core import serializers
 
 
+# def dashboard_publishers_broadcasts_api(request, id):
+#     from tv.models import Broadcast
+#     from .serializers import PublisherAssetsSerializer
+#     if not request.user.is_authenticated or not request.user.is_superuser:
+#         return redirect('login', next=request.path)
+#     if id == 'all':
+#         broadcasts = Broadcast.objects.all()
+#     else:
+#         publisher = Publisher.objects.get(id=int(id))
+#         broadcasts = publisher.broadcasts.all()
+#     serializer = PublisherAssetsSerializer(broadcasts, many=True)
+#     data = serializer.data
+#     return JsonResponse(data, safe=False)
+class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
+    page_size = 10
+    max_page_size = 1000
+    def get_queryset(self):
+        from tv.models import Broadcast
+        from .serializers import PublisherAssetsSerializer
+        if not self.request.user.is_authenticated or not self.request.user.is_superuser:
+            return redirect('login', next=self.request.path)
+        if self.kwargs['id'] == 'all':
+            broadcasts = Broadcast.objects.all()
+        else:
+            publisher = Publisher.objects.get(id=int(self.kwargs['id']))
+            broadcasts = publisher.broadcasts.all()
+            
+        if self.request.query_params.get('not_in_tv'):
+            from tv.models import Tv
+            exclude_tv = Tv.objects.get(id=int(self.request.query_params.get('not_in_tv')))
+            broadcasts = broadcasts.exclude(tv=exclude_tv)
 
-def dashboard_publishers_broadcasts_api(request, id):
-    from tv.models import Broadcast
-    from .serializers import PublisherAssetsSerializer
-    if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
-    if id == 'all':
-        broadcasts = Broadcast.objects.all()
-    else:
-        publisher = Publisher.objects.get(id=int(id))
-        broadcasts = publisher.broadcasts.all()
-    serializer = PublisherAssetsSerializer(broadcasts, many=True)
-    data = serializer.data
-    return JsonResponse(data, safe=False)
-
+        return broadcasts
+    
+    def get(self, request, id, format=None):
+        broadcasts = self.paginate_queryset(self.get_queryset(), request)
+        serializer = PublisherAssetsSerializer(broadcasts, many=True)
+        data = serializer.data
+        return self.get_paginated_response(data)
 
 
 def dashboard_tvs_view(request):
@@ -121,20 +162,27 @@ def tvs_add_view(request):
         tv.save()
     return redirect('dashboard_tvs_view')
 
+from django.core.paginator import Paginator
 
 def tvs_detail(request, id):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('login', next=request.path)
     tv = Tv.objects.get(id=id)
+    page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
+    broadcasts_page_number = request.GET.get('broadcasts_page', 1)
     broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
     publishers = Publisher.objects.all()
+    broadcasts_paginator = Paginator(broadcasts, page_size)
+    
     business_types = BusinessType.objects.all()
     context = {
         'tv': tv,
-        'broadcasts': broadcasts,
+        # 'broadcasts': broadcasts,
+        'broadcasts': broadcasts_paginator.get_page(broadcasts_page_number),
         'publishers': publishers,
-        'business_types': business_types
+        # 'paginators_page_obj': broadcasts_paginator.get_page(broadcasts_page_number),
+        'business_types': business_types,
     }
     return render(request, 'dashboard/tvs_detail.html', context)
 

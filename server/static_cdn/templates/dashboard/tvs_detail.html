@@ -234,7 +234,7 @@
                         תמונה
                         {% else %}
                         <div class="videoWrapper">
-                            <video muted autoplay loop>
+                            <video muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;" loop>
                                 <source src="{{broadcast.media.url}}" type="video/mp4">
                             </video>
                         </div>
@@ -289,7 +289,7 @@
             based on the selected publishers, the broadcasts will be shown down and the user will be able to select the broadcast he wants to add to the tv
         -->
     <label for="publisher">מפרסם</label>
-    <select name="publisher" id="publisher" onchange="getBroadcasts()">
+    <select name="publisher" id="publisher" onchange="publisherChanged()">
         <option value="">בחר מפרסם</option>
         {% for publisher in publishers %}
         <option value="{{publisher.id}}">{{publisher.name}}</option>
@@ -298,6 +298,7 @@
     <label for="broadcast_select">בחר שידור</label>
     <div id="broadcast_select">
     </div>
+    <div id="broadcasts_pagination" class="pagination"></div>
 
 
 
@@ -471,32 +472,46 @@
         var br = document.createElement('br');
         openingHours.appendChild(br);
     }
-
-    function getBroadcasts() {
+    function publisherChanged() {
         var xhr = new XMLHttpRequest();
         let publisherId = document.querySelector('#publisher').value;
         if (publisherId == '') {
             publisherId = 'all';
         }
-        xhr.open('GET', '/dashboard/publishers/' + publisherId + '/broadcasts/', true);
+        let tv_id = {{tv.id}};
+        page_num= 1;
+        getBroadcasts(`/dashboard/publishers/${publisherId}/broadcasts/?not_in_tv=${tv_id}&page=${page_num}`);
+    }
+    function getBroadcasts(api_url) {
+        xhr.open('GET', api_url, true);
         xhr.onload = function () {
             if (this.status == 200) {
-                var broadcasts = JSON.parse(this.responseText);
+                var response = JSON.parse(this.responseText);
+                var broadcasts = response.results;
+                let count = response.count;
+                let nextUrl = response.next;
+                let previousUrl = response.previous;
+
                 var broadcastsSelect = document.querySelector('#broadcast_select');
                 broadcastsSelect.innerHTML = '';
+
+                // make sure we only display broadcasts that are not already added
                 let existing_broadcasts_ids = [];
                 let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
                 for (var i = 0; i < ids_inputs.length; i++) {
                     existing_broadcasts_ids.push(ids_inputs[i].value);
                 }
                 for (var i = 0; i < broadcasts.length; i++) {
+                    // if broadcast is already added, skip it
                     if (existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
                         continue;
                     }
+
                     let card = `<div class="broadcast-card"><h3>${broadcasts[i].name}</h3>`
                     if (broadcasts[i].media_type == 'video') {
                         card +=
-                            `<div class="videoWrapper"><video src="${broadcasts[i].media}" muted loop autoplay></video></div>`
+                            `<div class="videoWrapper"><video src="${broadcasts[i].media}" muted loop onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;"
+                                ></video></div>`
                     } else {
                         card += `<div class="imageWrapper"><img src="${broadcasts[i].media}" /></div>`
                     }
@@ -512,10 +527,58 @@
                             </a>
                              </p>`
                     }
+                    
+                    // add a tag if broadcast is a video or image
+                    if (broadcasts[i].media_type == 'video') {
+                        card += `<p>סוג: סרטון</p>`
+                    } else {
+                        card += `<p>סוג: תמונה</p>`
+                    }
+                    
                     card +=
                         `<button type="button" onclick="addBroadcast(${broadcasts[i].id})">הוסף לטלוויזיה</button></div>`
                     broadcastsSelect.innerHTML += card;
                 }
+                // endfor
+                // add pagination
+                // <div class="pagination">
+                //     <span class="step-links">
+                //         {% if page_obj.has_previous %}
+                //             <a href="?page=1">&laquo; first</a>
+                //             <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                //         {% endif %}
+
+                //         <span class="current">
+                //             Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                //         </span>
+
+                //         {% if page_obj.has_next %}
+                //             <a href="?page={{ page_obj.next_page_number }}">next</a>
+                //             <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                //         {% endif %}
+                //     </span>
+                // </div>
+                    let pagination = document.querySelector('#broadcasts_pagination');
+                    pagination.innerHTML = '';
+                    // TODO: work from here
+                    let paginationHtml = `<div class="pagination">
+                        <span class="step-links">`;
+                    if (previousUrl) {
+                        paginationHtml += `<a href="?page=1">&laquo; ראשון</a>`
+                        paginationHtml += `<a href="${previousUrl}">&laquo; קודם</a>`;
+                    }
+                    let page_size = broadcasts.length;
+                    paginationHtml += `<span class="current">
+                        עמוד ${Math.ceil(count / page_size)} מתוך ${Math.ceil(count / page_size)}.`;
+                    if (nextUrl) {
+                        paginationHtml += `<a href="${nextUrl}">הבא &raquo;</a>`;
+                        paginationHtml += `<a href="?page=${Math.ceil(count / page_size)}">אחרון &raquo;</a>`;
+                    }
+                    paginationHtml += `</span></div>`;
+                    pagination.innerHTML = paginationHtml;
+            } else {
+                console.log('error');
+
             }
         }
         xhr.send();

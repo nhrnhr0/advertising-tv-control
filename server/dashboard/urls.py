@@ -14,7 +14,7 @@ urlpatterns = [
     path('publishers/<int:id>/', publishers_detail, name='dashboard_publishers_detail'),
     path('publishers/<int:id>/edit/', publishers_detail_edit, name='dashboard_publishers_detail_edit'),
     path('publishers/<int:id>/broadcasts/add/', dashboard_publishers_detail_add_broadcast, name='dashboard_publishers_detail_add_broadcast'),
-    path('publishers/<str:id>/broadcasts/', dashboard_publishers_broadcasts_api, name='dashboard_publishers_broadcasts_api'),
+    path('publishers/<str:id>/broadcasts/', dashboard_publishers_broadcasts_api.as_view(), name='dashboard_publishers_broadcasts_api'),
     
     path('tvs/', dashboard_tvs_view, name='dashboard_tvs_view'),
     path('tvs/add/', tvs_add_view, name='dashboard_tvs_add_view'),

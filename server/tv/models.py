@@ -101,8 +101,11 @@ class Tv(models.Model):
         return self.name
     
     def is_opening_hours_active(self):
-        now = timezone.now()
-        if self.opening_hours.filter(weekday=now.weekday(), from_hour__lte=now.time(), to_hour__gte=now.time()).exists():
+        now = timezone.localtime(timezone.now())
+        # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
+        weekday = now.weekday() + 2
+        print('day: ', weekday, 'time: ', now.time())
+        if self.opening_hours.filter(weekday=weekday, from_hour__lte=now.time(), to_hour__gte=now.time()).exists():
             return True
         return False
     
