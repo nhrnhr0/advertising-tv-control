@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # "daphne",  # for channels
-    "channels",
+    'channels',
     # my apps
     'core',
     'tv',

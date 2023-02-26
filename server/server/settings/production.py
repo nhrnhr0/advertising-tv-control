@@ -17,4 +17,4 @@ CHANNEL_LAYERS = {
 }
 
 # add to the start of  INSTALLED_APPS "daphne",
-INSTALLED_APPS.insert(0, "daphne")
+# INSTALLED_APPS.insert(0, "daphne")
