@@ -1,5 +1,5 @@
 from django.contrib import admin
-from  core.models import Publisher
+from  core.models import Publisher,PublisherType
 class UserBroadcastsInline(admin.TabularInline):
     model = Publisher.broadcasts.through
     extra = 1
@@ -11,3 +11,8 @@ class PublisherAdmin(admin.ModelAdmin):
     filter_horizontal = ('broadcasts',)
     list_filter = ('name',)
 admin.site.register(Publisher, PublisherAdmin)
+
+class PublisherTypeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    list_filter = ('name',)
+admin.site.register(PublisherType, PublisherTypeAdmin)
