@@ -18,7 +18,7 @@ USE_I18N = True
 USE_TZ = True
 USE_L10N = True
 ROOT_URLCONF = "server.urls"
-ASGI_APPLICATION = 'server.asgi.application'
+ASGI_APPLICATION = "server.asgi.application"
 WSGI_APPLICATION = "server.wsgi.application"
 
 LOCALE_PATHS = [
