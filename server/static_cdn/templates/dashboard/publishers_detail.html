@@ -173,9 +173,12 @@
 <script type="text/javascript">
     
     function initMap(){
-        let originalPolygon = {{publisher.geojson|safe}};
-        console.log('originalPolygon:',originalPolygon);
-        
+        {%if publisher.geojson%}
+            let originalPolygon = {{publisher.geojson|safe}};
+            console.log('originalPolygon:',originalPolygon);
+        {%else%}
+            let originalPolygon = null;
+        {%endif%}
         
 
         var center = [31.37857870948204, 34.69895372415273];
