@@ -26,7 +26,7 @@ LOCALE_PATHS = [
 ]
 
 INSTALLED_APPS = [
-    # for channels
+    'daphne',
     'corsheaders',
     "django.contrib.admin",
     "django.contrib.auth",
