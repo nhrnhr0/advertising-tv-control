@@ -130,7 +130,8 @@ class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
             from tv.models import Tv
             exclude_tv = Tv.objects.get(id=int(self.request.query_params.get('not_in_tv')))
             broadcasts = broadcasts.exclude(tv=exclude_tv)
-
+        if self.request.query_params.get('page_size'):
+            self.page_size = int(self.request.query_params.get('page_size'))
         return broadcasts
     
     def get(self, request, id, format=None):
