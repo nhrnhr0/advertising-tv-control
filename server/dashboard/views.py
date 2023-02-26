@@ -6,7 +6,7 @@ from tv.models import BusinessType
 from django.conf import settings
 from django.http import JsonResponse
 from django.core import serializers
-
+from core.models import Publisher, PublisherType
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 def main_dashboard_view(request):
@@ -39,8 +39,10 @@ def publishers_detail(request, id):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('login', next=request.path)
     publisher = Publisher.objects.get(id=id)
+    publishers_types = PublisherType.objects.all()
     context = {
-        'publisher': publisher
+        'publisher': publisher,
+        'publishers_types': publishers_types
     }
     return render(request, 'dashboard/publishers_detail.html', context)
 

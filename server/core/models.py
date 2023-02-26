@@ -14,6 +14,12 @@ class Publisher(models.Model):
     pass
 
 
+class PublisherType(models.Model):
+    name = models.CharField(max_length=100)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name
 
 # isoweekday
 WEEKDAYS = [
