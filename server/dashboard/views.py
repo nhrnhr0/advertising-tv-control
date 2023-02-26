@@ -55,6 +55,45 @@ def publishers_detail_edit(request, id):
     if request.method == 'POST':
         publisher_name = request.POST.get('name')
         publisher.name = publisher_name
+        # about
+        # geojson
+        # publishers_types
+        # logo
+        # phone
+        # email
+        # contact_name
+        # contact_phone
+        # qr_link
+        publisher.about = request.POST.get('about')
+        publisher.geojson = request.POST.get('geojson')
+        publisher_types = request.POST.getlist('publishersType')
+        publisher.publishers_types.clear()
+        for publisher_type in publisher_types:
+            publisher.publishers_types.add(publisher_type)
+        logo = request.FILES.get('logo')
+        if logo:
+            publisher.logo = logo
+        
+        address = request.POST.get('address')
+        if address:
+            publisher.address = address
+        
+        phone = request.POST.get('phone')
+        if phone:
+            publisher.phone = phone
+        email = request.POST.get('email')
+        if email:
+            publisher.email = email
+        contact_name = request.POST.get('contact_name')
+        if contact_name:
+            publisher.contact_name = contact_name
+        contact_phone = request.POST.get('contact_phone')
+        if contact_phone:
+            publisher.contact_phone = contact_phone
+        
+        publisher.qr_link = request.POST.get('qr_link', '')
+
+        
         publisher.save()
         return redirect('dashboard_publishers_detail', id=id)
     context = {
@@ -173,16 +212,15 @@ def tvs_detail(request, id):
         return redirect('login', next=request.path)
     tv = Tv.objects.get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
-    broadcasts_page_number = request.GET.get('broadcasts_page', 1)
     broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
     publishers = Publisher.objects.all()
-    broadcasts_paginator = Paginator(broadcasts, page_size)
+    # broadcasts_paginator = Paginator(broadcasts, page_size)
     
     business_types = BusinessType.objects.all()
     context = {
         'tv': tv,
         # 'broadcasts': broadcasts,
-        'broadcasts': broadcasts_paginator.get_page(broadcasts_page_number),
+        'broadcasts': broadcasts,
         'publishers': publishers,
         # 'paginators_page_obj': broadcasts_paginator.get_page(broadcasts_page_number),
         'business_types': business_types,

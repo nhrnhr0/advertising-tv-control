@@ -18,7 +18,7 @@
 {% block content %}
 <!-- show the details of the publishers (name and broadcasts) -->
 <h2>מפרסם: {{publisher.name}}</h2>
-<form action="/dashboard/publishers/{{publisher.id}}/edit/" method="POST">
+<form action="/dashboard/publishers/{{publisher.id}}/edit/" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <h2>פרטי המפרסם</h2>
     <label for="name">שם המפרסם</label>
@@ -27,17 +27,19 @@
     <label for="about">אודות</label>
     <textarea name="about" id="about" cols="30" rows="10">{{publisher.about}}</textarea>
     <br>
-    <label for="address">אזור עבודה</label>
+    <label for="hidden-maps-inputs">אזור עבודה</label>
 <div class="map-container">
     <div id="map"></div>
-    <div id="hidden-maps-inputs"></div>
+    <input type="hidden" id="hidden-maps-inputs" name="geojson" value="{{publisher.geojson}}">
+
+
 </div>
     <label for="publishersType">
         סוגי מפרסם
     </label>
     <select name="publishersType" id="publishersTypeSelect" multiple>
         {% for publisher_type in publishers_types %}
-            <option value="{{publisher_type.id}}" {% if publisher_type in publisher.publishers_type.all %}selected{% endif %}>{{publisher_type.name}}</option>
+            <option value="{{publisher_type.id}}" {% if publisher_type in publisher.publishers_types.all %}selected{% endif %}>{{publisher_type.name}}</option>
         {% endfor %}
     </select>
     <a href="/admin/core/publishertype/add/" target="popup"
@@ -48,7 +50,7 @@
             <label for="logo">לוגו העסק
             </label>
             {% if publisher.logo %}
-                <img src="{{tv.publisher.url}}" alt="logo" width="100px" height="100px">
+                <img src="{{publisher.logo.url}}" alt="logo" width="100px" height="100px">
             {% endif %}
             <input class="input-field" type="file" name="logo" id="logo" accept="image/*">
             
@@ -80,6 +82,8 @@
     <label for="contact_phone">טלפון איש קשר</label>
     <input type="text" name="contact_phone" id="contact_phone" value="{{publisher.contact_phone}}">
 
+    <label for="qr_link">קישור ברירת מחדל לQR של המפרסם</label>
+    <input type="text" name="qr_link" id="qr_link" value="{{publisher.qr_link}}">
 
     <input type="submit" value="עדכן">
 </form>
@@ -95,6 +99,7 @@
             <th>סוג השידור</th>
             <th>פעולות</th>
             <th>טלוויזיות</th>
+            <th>קישור QR</th>
         </tr>
     </thead>
     <tbody>
@@ -108,7 +113,10 @@
                 </div>
                 {% elif broadcast.media_type == 'video' %}
                 <div class="videoWrapper">
-                    <video muted autoplay loop>
+                    <!-- <video muted autoplay loop>
+                        <source src="{{broadcast.media.url}}" type="video/mp4">
+                    </video> -->
+                    <video muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;" loop>
                         <source src="{{broadcast.media.url}}" type="video/mp4">
                     </video>
                 </div>
@@ -165,6 +173,11 @@
 <script type="text/javascript">
     
     function initMap(){
+        let originalPolygon = {{publisher.geojson|safe}};
+        console.log('originalPolygon:',originalPolygon);
+        
+        
+
         var center = [31.37857870948204, 34.69895372415273];
 
         // Create the map
@@ -177,6 +190,13 @@
             // maxZoom: 12,
         }).addTo(map);
 
+
+        // add the polygon to the map if it exists
+        if (originalPolygon) {
+            debugger;
+            new L.GeoJSON(originalPolygon).addTo(map);
+        }
+
         // add a marker in the given location
         // L.marker(center).addTo(map);
 
@@ -188,7 +208,7 @@
         position: 'topright',
         draw: {
             polygon: {
-            allowIntersection: false, // Restricts shapes to simple polygons
+            // allowIntersection: false, // Restricts shapes to simple polygons
             drawError: {
                 color: '#e1e100', // Color the shape will turn when intersects
                 message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
@@ -223,9 +243,10 @@
         if (type === 'polygon') {
             // Do marker specific actions
             debugger;
-            console.log(layer.toGeoJSON());
+            let val = JSON.stringify(layer.toGeoJSON())
+            console.log(val);
             // create a hidden input with the geojson
-            document.getElementById('hidden-maps-inputs').innerHTML += `<input type="hidden" name="geojson" value="${JSON.stringify(layer.toGeoJSON())}">`
+            document.getElementById('hidden-maps-inputs').value=val;
         }
         // remove the previous layer
         editableLayers.clearLayers();

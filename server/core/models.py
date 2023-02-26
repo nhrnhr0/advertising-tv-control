@@ -1,6 +1,12 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+class PublisherType(models.Model):
+    name = models.CharField(max_length=100)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name
 
 # from tv.models import Broadcast
 # Create your models here.
@@ -11,15 +17,20 @@ class Publisher(models.Model):
     # )
     name = models.CharField(max_length=100)
     broadcasts = models.ManyToManyField('tv.Broadcast', blank=True, related_name='publisher')
+    
+    about = models.TextField(blank=True)
+    geojson = models.JSONField(blank=True)
+    publishers_types = models.ManyToManyField(PublisherType, blank=True, related_name='publishers', verbose_name=_('publishers types'))
+    logo = models.ImageField(upload_to='publishers-logos/', blank=True, null=True)
+    address = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'))
+    email = models.CharField(max_length=100, blank=True, verbose_name=_('Email'))
+    contact_name = models.CharField(max_length=100, blank=True, verbose_name=_('Contact name'))
+    contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'))
+    qr_link = models.CharField(max_length=100, blank=True, verbose_name=_('QR link'))
     pass
 
 
-class PublisherType(models.Model):
-    name = models.CharField(max_length=100)
-    updated = models.DateTimeField(auto_now=True)
-    created = models.DateTimeField(auto_now_add=True)
-    def __str__(self):
-        return self.name
 
 # isoweekday
 WEEKDAYS = [
