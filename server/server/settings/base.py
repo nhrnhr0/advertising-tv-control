@@ -26,7 +26,7 @@ LOCALE_PATHS = [
 ]
 
 INSTALLED_APPS = [
-    # for channels
+    'daphne',
     'corsheaders',
     "django.contrib.admin",
     "django.contrib.auth",
@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # "daphne",  # for channels
-    "channels",
+    'channels',
     # my apps
     'core',
     'tv',
