@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from jsonfield import JSONField
+
 class PublisherType(models.Model):
     name = models.CharField(max_length=100)
     updated = models.DateTimeField(auto_now=True)
@@ -19,7 +21,7 @@ class Publisher(models.Model):
     broadcasts = models.ManyToManyField('tv.Broadcast', blank=True, related_name='publisher')
     
     about = models.TextField(blank=True)
-    geojson = models.JSONField(blank=True, null=True)
+    geojson = JSONField(blank=True, null=True)
     publishers_types = models.ManyToManyField(PublisherType, blank=True, related_name='publishers', verbose_name=_('publishers types'))
     logo = models.ImageField(upload_to='publishers-logos/', blank=True, null=True)
     address = models.CharField(max_length=100, blank=True)
