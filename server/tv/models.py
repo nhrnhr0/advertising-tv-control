@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from jsonfield import JSONField
 
 class Broadcast(models.Model):
     # defult name is the media file name
@@ -77,7 +78,8 @@ class ContentWithHistory(models.Model):
 class Tv(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=100, blank=True)
-    location = models.JSONField(blank=True, null=True)
+    # location = models.JSONField(blank=True, null=True)
+    location= JSONField(max_length=200)
     buisness_types = models.ManyToManyField(BusinessType, blank=True, related_name='tvs', verbose_name=_('Business type'))
     logo = models.ImageField(upload_to='tv-logos/', blank=True, null=True)
     phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'))
