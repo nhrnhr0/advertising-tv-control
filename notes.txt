@@ -62,3 +62,5 @@ copy the `goldtv.conf` to the file
 sudo mkdir /var/log/gunicorn
 sudo supervisorctl reread
 sudo supervisorctl update
+
+sudo cp /home/ubuntu/advertising-tv-control/goldTvDjangoNginx.conf /etc/nginx/conf.d/
