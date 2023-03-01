@@ -61,6 +61,13 @@
             <input class="input-field" type="text" name="name" id="name" value="{{tv.name}}" required>
         </div>
         <div>
+            <label for="manual_turn_off">כיבוי ידני
+            </label>
+            <!-- checkbox
+             -->
+             <input type="checkbox" name="manual_turn_off" id="manual_turn_off" {% if tv.manual_turn_off %}checked{% endif %}>
+        </div>
+        <div>
             <label for="address">כתובת
             </label>
             <input class="input-field" type="text" name="address" id="address" value="{{tv.address}}">

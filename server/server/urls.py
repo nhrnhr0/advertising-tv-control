@@ -21,7 +21,6 @@ from tv.views import save_broadcasts_played
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('login/', auth_views.LoginView.as_view(), name='login'),
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('tv/', include('tv.urls')),

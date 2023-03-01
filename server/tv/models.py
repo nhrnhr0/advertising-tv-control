@@ -50,7 +50,8 @@ class BroadcastInTv(models.Model):
         return f'{self.broadcast.name}: {self.duration}'
     class Meta:
         ordering = ['order', '-created',]
-        
+    
+    
 
 
 class BusinessType(models.Model):
@@ -79,6 +80,7 @@ class Tv(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=100, blank=True)
     # location = models.JSONField(blank=True, null=True)
+    manual_turn_off = models.BooleanField(default=False)
     location= JSONField(max_length=200)
     buisness_types = models.ManyToManyField(BusinessType, blank=True, related_name='tvs', verbose_name=_('Business type'))
     logo = models.ImageField(upload_to='tv-logos/', blank=True, null=True)
@@ -102,7 +104,16 @@ class Tv(models.Model):
     def __str__(self):
         return self.name
     
+    def is_in_opening_hours(self,time):
+        # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
+        weekday = time.weekday() + 2
+        if self.opening_hours.filter(weekday=weekday, from_hour__lte=time.time(), to_hour__gte=time.time()).exists():
+            return True
+        return False
+    
     def is_opening_hours_active(self):
+        if self.manual_turn_off:
+            return False
         now = timezone.localtime(timezone.now())
         # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
         weekday = now.weekday() + 2

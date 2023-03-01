@@ -37,13 +37,29 @@ def save_broadcasts_played(request):
         for broadcast in broadcasts:
             broadcast_id = broadcast['broadcast']
             tv_display_id = broadcast['tv_display']
-            str_time = broadcast['time'] # 2023-02-20T13:38:41.198Z
-            uuid= broadcast['uuid']
-            time = datetime.datetime.strptime(str_time, "%Y-%m-%dT%H:%M:%S.%fZ")
             try:
-                obj = playedBroadcast.objects.create(broadcast_id=broadcast_id, tv_id=tv_display_id, time=time, uuid=uuid)
-                last_broadcast = obj
-                added += 1
+                tv = Tv.objects.get(id=tv_display_id)
+                str_time = broadcast['time'] # 2023-02-20T13:38:41.198Z
+                uuid= broadcast['uuid']
+                time = datetime.datetime.strptime(str_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+                if playedBroadcast.objects.filter(uuid=uuid).exists():
+                    continue
+                if not tv.is_in_opening_hours(time):
+                    continue
+                try:
+                    obj = playedBroadcast.objects.create(broadcast_id=broadcast_id, tv_id=tv_display_id, time=time, uuid=uuid)
+                    last_broadcast = obj
+                    added += 1
+                    broadcast_in_tv = BroadcastInTv.objects.get(broadcast_id=broadcast_id, tv_id=tv_display_id)
+                    broadcast_in_tv.plays_left -= 1
+                    if broadcast_in_tv.plays_left <= 0:
+                        # broadcast_in_tv.plays_left = 0
+                        broadcast_in_tv.is_active = False
+
+                    broadcast_in_tv.save()
+                except Exception as e:
+                    print(e)
+                    pass
             except Exception as e:
                 print(e)
                 pass

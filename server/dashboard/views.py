@@ -11,13 +11,13 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 def main_dashboard_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     return render(request, 'dashboard/main_dashboard.html', {})
 
 def dashboard_publishers_view(request):
     
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     all_publishers = Publisher.objects.all()
     context = {
         'all_publishers': all_publishers
@@ -26,7 +26,7 @@ def dashboard_publishers_view(request):
 
 def publishers_add_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     if request.method == 'POST':
         publisher_name = request.POST.get('name')
         publisher = Publisher.objects.create(name=publisher_name)
@@ -37,7 +37,7 @@ def publishers_add_view(request):
 
 def publishers_detail(request, id):
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     publisher = Publisher.objects.get(id=id)
     publishers_types = PublisherType.objects.all()
     context = {
@@ -50,7 +50,7 @@ def publishers_detail(request, id):
 # get the file and the name of the file if exists and save it for the publisher
 def publishers_detail_edit(request, id):
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     publisher = Publisher.objects.get(id=id)
     if request.method == 'POST':
         publisher_name = request.POST.get('name')
@@ -105,7 +105,7 @@ def publishers_detail_edit(request, id):
 def dashboard_publishers_detail_add_broadcast(request, id):
     from tv.models import Broadcast
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     publisher = Publisher.objects.get(id=id)
     if request.method == 'POST':
         
@@ -144,7 +144,7 @@ def dashboard_publishers_detail_add_broadcast(request, id):
 #     from tv.models import Broadcast
 #     from .serializers import PublisherAssetsSerializer
 #     if not request.user.is_authenticated or not request.user.is_superuser:
-#         return redirect('login', next=request.path)
+#           return redirect('/admin/login/?next=' + request.path)
 #     if id == 'all':
 #         broadcasts = Broadcast.objects.all()
 #     else:
@@ -185,7 +185,7 @@ class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
 def dashboard_tvs_view(request):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     all_tvs = Tv.objects.all()
     context = {
         'all_tvs': all_tvs
@@ -195,7 +195,7 @@ def dashboard_tvs_view(request):
 def tvs_add_view(request):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     if request.method == 'POST':
         tv_name = request.POST.get('name')
         if not tv_name:
@@ -209,7 +209,7 @@ from django.core.paginator import Paginator
 def tvs_detail(request, id):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
     broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
@@ -230,7 +230,7 @@ def tvs_detail(request, id):
 def tvs_detail_add_broadcast(request, id):
     from tv.models import Tv, Broadcast
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
     if request.method == 'POST':
         broadcast_id = request.POST.get('broadcast_id')
@@ -252,7 +252,7 @@ def tvs_detail_add_broadcast(request, id):
 def tvs_detail_change_left_plays(request, id):
     from tv.models import Tv, Broadcast, BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
     if request.method == 'POST':
         broadcast_in_tv_id = request.POST.get('broadcast_in_tv_id')
@@ -269,7 +269,7 @@ def tvs_detail_change_left_plays(request, id):
 def tvs_detail_edit(request, id):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
-        return redirect('login', next=request.path)
+        return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
     if request.method == 'POST':
         # request.POST: 'qr_link':'https://ms-global.co.il''new_day[]':'1''new_opening_hour[]':'06:00''new_closing_hour[]':'18:00''existing_broadcasts_ids[]':'4''existing_broadcasts_in_tvs_ids[]':'45''broadcast_2_duration':'2''broadcast_2_order':'35''broadcast_3_duration':'20.0''broadcast_3_order':'25''broadcast_11_duration':'10.0''broadcast_11_active':'on''broadcast_11_order':'55''broadcast_4_duration':'20.0''broadcast_4_order':'65''publisher':''
@@ -278,7 +278,7 @@ def tvs_detail_edit(request, id):
         tv.name = tv_name
         
         tv.address = request.POST.get('address')
-        
+        tv.manual_turn_off = request.POST.get('manual_turn_off', False) == 'on'
         # save business types add/remove
         businessTypeIds = request.POST.getlist('businessType')
         for businessTypeId in businessTypeIds:
