@@ -1,9 +1,9 @@
 
 from .base import *
 
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com', 'gold-tv.boost-pop.com']
+ALLOWED_HOSTS = ['gold-tv-server.boost-pop.com', 'gold-tv.boost-pop.com', '3.12.40.200', '172.31.19.200', 'kehilaton.boost-pop.com', 'localhost']
 CSRF_TRUSTED_ORIGINS = ['https://gold-tv-server.boost-pop.com','http://gold-tv-server.boost-pop.com', 'https://gold-tv.boost-pop.com', 'http://gold-tv.boost-pop.com']
 
 
