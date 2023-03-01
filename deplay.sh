@@ -5,6 +5,4 @@ python server/manage.py migrate
 env/bin/python server/manage.py collectstatic --noinput
 sudo supervisorctl restart gunicornGoldTV
 sudo service nginx restart
-sudo systemctl daemon-reload
-sudo systemctl restart daphne
 echo 'done'
