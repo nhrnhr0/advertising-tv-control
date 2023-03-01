@@ -44,8 +44,21 @@ GRANT ALL PRIVILEGES
 exit exit
 
 pip3 install --upgrade pip
-pip3 install virtualenv
-
+sudo apt install python3.8-venv
 git clone https://github.com/nhrnhr0/advertising-tv-control.git
 cd advertising-tv-control/
 git checkout prod
+
+ 
+python3 -m venv env 
+
+
+# install and set supervisorctl 
+# https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-supervisor-on-ubuntu-and-debian-vps
+
+sudo nano /etc/supervisor/conf.d/goldtv.conf
+copy the `goldtv.conf` to the file
+
+sudo mkdir /var/log/gunicorn
+sudo supervisorctl reread
+sudo supervisorctl update
