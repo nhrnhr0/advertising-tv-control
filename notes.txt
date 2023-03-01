@@ -3,5 +3,49 @@
 
 
 # deploy instructions:
-
 https://okbaboularaoui.medium.com/how-to-set-up-django-with-postgres-nginx-and-daphne-django-channels-on-ubuntu-20-04-b0d24dcc7da9
+
+
+
+# deploy insctructions only for django app:
+https://arctype.com/blog/install-django-ubuntu/
+
+create new ec2 instance
+sudo apt-get install python3-pip python3-dev libpq-dev curl nginx -y
+sudo systemctl start nginx
+sudo systemctl enable nginx
+
+sudo apt-get install postgresql postgresql-contrib -y
+sudo su - postgres
+psql
+
+```
+CREATE DATABASE 
+	djangodb;
+CREATE USER 
+	djangouser 
+	WITH PASSWORD 'WYCZY49xe9pcCV47E5EC';
+```
+
+```
+ALTER ROLE djangouser 
+	SET client_encoding 
+	TO 'utf8';
+ALTER ROLE djangouser 
+	SET default_transaction_isolation 
+	TO 'read committed';
+ALTER ROLE djangouser 
+	SET timezone 
+	TO 'UTC+2';
+GRANT ALL PRIVILEGES 
+	ON DATABASE djangodb TO djangouser;
+```
+
+exit exit
+
+pip3 install --upgrade pip
+pip3 install virtualenv
+
+git clone https://github.com/nhrnhr0/advertising-tv-control.git
+cd advertising-tv-control/
+git checkout prod
