@@ -19,6 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from tv.views import save_broadcasts_played
 from django.contrib.auth import views as auth_views
+from core.views import qr_scaned
 
 urlpatterns = [
     path('login/', auth_views.LoginView.as_view(), name='login'),
@@ -27,6 +28,7 @@ urlpatterns = [
     path('tv/', include('tv.urls')),
     path('api/broadcasts-played/', save_broadcasts_played, name='save_broadcasts_played'),
     path('dashboard/', include('dashboard.urls')),
+    path('qr/<int:tv_id>/<int:broadcast_id>/', qr_scaned, name='get_qr'),
 ]
 
 

@@ -88,6 +88,8 @@
     <input type="submit" value="עדכן">
 </form>
 {% include "dashboard/components/new_broadcast.html" %}
+<form method="POST">
+    {% csrf_token %}
 <h3>שידורים קיימים</h3>
 <table>
     <thead>
@@ -106,6 +108,7 @@
         {% for broadcast in publisher.broadcasts.all %}
         <tr>
             <td>{{broadcast.id}}</td>
+            <input type="hidden" id="broadcast-ids[]" name="broadcast-ids[]" value="{{broadcast.id}}">
             <td>
                 {% if broadcast.media_type == 'image' %}
                 <div class="imageWrapper">
@@ -142,16 +145,23 @@
             </td>
             <td>
                 {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
-                <span>{{broad_in_tv.tv}}</span>
-                {% empty %}
-                <span>לא פעיל בשום טלוויזיה</span>
+                    <span>{{broad_in_tv.tv}}</span>
+                    {% empty %}
+                    <span>לא פעיל בשום טלוויזיה</span>
                 {% endfor %}
+            </td>
+            <td>
+                <!-- {%if broadcast.qr_link %}
+                    {{broadcast.qr_link }}
+                {%endif%} -->
+                <input type="text" value="{{broadcast.qr_link}}" name="qr_link_{{broadcast.id}}" id="qr_link">
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
+<input type="submit" value="עדכן">
+</form>
 <!-- <a href="/dashboard/publishers/{{publisher.id}}/broadcasts/add">הוסף שידור חדש</a> -->
 <style>
 

@@ -345,6 +345,7 @@
         if (plays_count == null || plays_count == "") {
             return;
         }
+        let price = prompt('הכנס מחיר מכירה (כולל מע"מ)', '0');
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/dashboard/tvs/{{tv.id}}/change_left_plays/', true);
         xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');

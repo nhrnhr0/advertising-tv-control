@@ -14,7 +14,8 @@ class BroadcastInTvSerializer(serializers.ModelSerializer):
     # serializers.CharField(source='broadcast.media', read_only=True)
     class Meta:
         model = BroadcastInTv
-        fields = ('broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','duration', 'order', 'updated', 'created',)
+        fields = ('broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','duration', 'order', 'updated', 'created','get_qr_tracker_link',)
+        read_only_fields = ('broadcast__name', 'broadcast__media', 'broadcast__media_type', 'get_qr_tracker_link',)
         
 class BroadcastSerializer(serializers.ModelSerializer):
     class Meta:

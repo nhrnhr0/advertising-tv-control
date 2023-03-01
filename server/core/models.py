@@ -30,6 +30,7 @@ class Publisher(models.Model):
     contact_name = models.CharField(max_length=100, blank=True, verbose_name=_('Contact name'))
     contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'))
     qr_link = models.CharField(max_length=100, blank=True, verbose_name=_('QR link'))
+    
     pass
 
 

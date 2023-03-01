@@ -18,6 +18,7 @@ def dashboard_publishers_view(request):
     
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('login', next=request.path)
+            
     all_publishers = Publisher.objects.all()
     context = {
         'all_publishers': all_publishers
@@ -40,6 +41,16 @@ def publishers_detail(request, id):
         return redirect('login', next=request.path)
     publisher = Publisher.objects.get(id=id)
     publishers_types = PublisherType.objects.all()
+    if request.method == 'POST':
+        from tv.models import Broadcast
+        broadcasts_ids = request.POST.getlist('broadcast-ids[]')
+        for broadcast_id in broadcasts_ids:
+            broadcast = Broadcast.objects.get(id=int(broadcast_id))
+            # get input name qr_link_{{broadcast.id}}
+            qr_link = request.POST.get('qr_link_' + str(broadcast.id))
+            if qr_link != broadcast.qr_link:
+                broadcast.qr_link = qr_link
+                broadcast.save()
     context = {
         'publisher': publisher,
         'publishers_types': publishers_types

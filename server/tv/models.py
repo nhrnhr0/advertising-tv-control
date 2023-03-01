@@ -12,6 +12,7 @@ class Broadcast(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     media = models.FileField(upload_to='broadcasts/', blank=True, null=True)
     media_type = models.CharField(max_length=100, blank=True, null=True)
+    qr_link = models.CharField(max_length=100, blank=True)
     class Meta:
         ordering = ['-created',]
     def __str__(self):
@@ -29,8 +30,6 @@ class Broadcast(models.Model):
             else:
                 self.media_type = 'unknown'
         return super().save(*args, **kwargs)
-
-
 
 
 class BroadcastInTv(models.Model):
@@ -51,6 +50,20 @@ class BroadcastInTv(models.Model):
     class Meta:
         ordering = ['order', '-created',]
         
+    def get_qr_tracker_link(self):
+        return f'/qr/{self.tv.id}/{self.broadcast.id}'
+
+
+class BroadcastQrScaned(models.Model):
+    tv = models.ForeignKey('Tv', on_delete=models.CASCADE)
+    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE, related_name='broadcast_qr_scaned')
+    link = models.CharField(max_length=100, blank=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return f'{self.broadcast.name}'
+    class Meta:
+        ordering = ['-created',]
 
 
 class BusinessType(models.Model):
