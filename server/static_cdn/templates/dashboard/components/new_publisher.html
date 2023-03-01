@@ -1,8 +1,0 @@
-    <!-- add new publisher -->
-    <h2>הוסף מפרסם חדש</h2>
-    <form action="/dashboard/publishers/add/" method="POST">
-        {% csrf_token %}
-        <label for="name">שם המפרסם</label>
-        <input type="text" name="name" id="name" required>
-        <input type="submit" value="הוסף">
-    </form>
