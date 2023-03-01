@@ -173,7 +173,7 @@
 <script type="text/javascript">
     
     function initMap(){
-        {%if publisher.geojson%}
+        {%if publisher.geojson != None%}
             let originalPolygon = {{publisher.geojson|safe}};
             console.log('originalPolygon:',originalPolygon);
         {%else%}
