@@ -26,7 +26,7 @@ admin.site.register(BroadcastInTv, BroadcastInTvAdmin)
 
 
 class playedBroadcastAdmin(admin.ModelAdmin):
-    list_display = ('id','uuid','tv','broadcast','time',)
+    list_display = ('id','uuid','tv','broadcast','time','uri_key','is_approved')
 admin.site.register(playedBroadcast, playedBroadcastAdmin)
 
 

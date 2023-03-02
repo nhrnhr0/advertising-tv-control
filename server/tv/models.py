@@ -81,7 +81,7 @@ class Tv(models.Model):
     address = models.CharField(max_length=100, blank=True)
     # location = models.JSONField(blank=True, null=True)
     manual_turn_off = models.BooleanField(default=False)
-    location= JSONField(max_length=200)
+    location= JSONField(max_length=200, blank=True, null=True)
     buisness_types = models.ManyToManyField(BusinessType, blank=True, related_name='tvs', verbose_name=_('Business type'))
     logo = models.ImageField(upload_to='tv-logos/', blank=True, null=True)
     phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'))
@@ -96,6 +96,7 @@ class Tv(models.Model):
     broadcasts = models.ManyToManyField(Broadcast, blank=True, related_name='tv', through='BroadcastInTv')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    uri_key = models.CharField(max_length=100, blank=True, null=True)
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
     # so also keep log, and track of the user's device info
     # pings_log = models.ManyToManyField('PingLog', related_name='pings_log', blank=True)
@@ -117,7 +118,7 @@ class Tv(models.Model):
         now = timezone.localtime(timezone.now())
         # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
         weekday = now.weekday() + 2
-        print('day: ', weekday, 'time: ', now.time())
+        # print('day: ', weekday, 'time: ', now.time())
         if self.opening_hours.filter(weekday=weekday, from_hour__lte=now.time(), to_hour__gte=now.time()).exists():
             return True
         return False
@@ -166,6 +167,8 @@ class playedBroadcast(models.Model):
     tv = models.ForeignKey(Tv, on_delete=models.CASCADE)
     broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE)
     time = models.DateTimeField(auto_now_add=True)
+    uri_key = models.CharField(max_length=100, blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
     class Meta:
         ordering = ['-time']
         unique_together = ('uuid', 'tv', 'broadcast', 'time')
