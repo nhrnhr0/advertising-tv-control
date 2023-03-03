@@ -18,4 +18,13 @@
             <a href="/dashboard/tvs/{{tv.id}}/">{{tv.name}}</a>
         {% endif %}
     {% endif %}
+
+    {% if '/dashboard/advertising-agency/' in request.path %}
+        <span>></span>
+        <a href="/dashboard/advertising-agency/">משרדי פרסום</a>
+        {% if agency.id %}
+            <span>></span>
+            <a href="/dashboard/advertising-agency/{{agency.id}}/">{{agency.name}}</a>
+        {% endif %}
+    {% endif %}
 </div>
