@@ -67,6 +67,20 @@
             
             <input class="input-field" type="file" name="logo" id="logo">
         </div>
+        <div>
+            <label for="publishers">מפרסמים
+            </label>
+            <ul>
+                {% for pub in agency.publishers.all %}
+                    <li>
+                        {% if pub.logo %}
+                            <img src="{{pub.logo.url}}" alt="logo" width="100px" height="100px" class="logo">
+                        {% endif %}
+                        <a href="/dashboard/publishers/{{pub.id}}/">{{pub.name}}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
         <button type="submit">שמור</button>
     </form>
     <style>
