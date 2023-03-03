@@ -1,0 +1,8 @@
+    <!-- add new publisher -->
+    <h2>הוסף משרד פרסום חדש</h2>
+    <form action="/dashboard/advertising-agency/add/" method="POST">
+        {% csrf_token %}
+        <label for="name">שם משרד הפרסום</label>
+        <input type="text" name="name" id="name" required>
+        <input type="submit" value="הוסף">
+    </form>

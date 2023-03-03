@@ -174,3 +174,18 @@ class playedBroadcast(models.Model):
         unique_together = ('uuid', 'tv', 'broadcast', 'time')
     def __str__(self):
         return f'{self.tv.name}: {self.broadcast.name} - {self.time}'
+    
+    
+class AdvertisingAgency(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=100, blank=True)
+    geojson = JSONField(blank=True, null=True)
+    phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'))
+    email = models.CharField(max_length=100, blank=True, verbose_name=_('Email'))
+    contact_name = models.CharField(max_length=100, blank=True, verbose_name=_('Contact name'))
+    contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'))
+    logo = models.ImageField(upload_to='adv-agens-logos/', blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name

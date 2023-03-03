@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 # Create your views here.
 from core.models import Publisher
 from dashboard.serializers import PublisherAssetsSerializer
+from tv.models import AdvertisingAgency
 from tv.models import BusinessType
 from django.conf import settings
 from django.http import JsonResponse
@@ -40,9 +41,11 @@ def publishers_detail(request, id):
         return redirect('/admin/login/?next=' + request.path)
     publisher = Publisher.objects.get(id=id)
     publishers_types = PublisherType.objects.all()
+    adv_agencies = AdvertisingAgency.objects.all()
     context = {
         'publisher': publisher,
-        'publishers_types': publishers_types
+        'publishers_types': publishers_types,
+        'adv_agencies': adv_agencies
     }
     return render(request, 'dashboard/publishers_detail.html', context)
 
@@ -93,6 +96,12 @@ def publishers_detail_edit(request, id):
         
         publisher.qr_link = request.POST.get('qr_link', '')
 
+        adv_agency_id = request.POST.get('adv_agency')
+        if adv_agency_id:
+            adv_agency = AdvertisingAgency.objects.get(id=adv_agency_id)
+            publisher.adv_agency = adv_agency
+        else:
+            publisher.adv_agency = None
         
         publisher.save()
         return redirect('dashboard_publishers_detail', id=id)

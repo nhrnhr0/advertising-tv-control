@@ -1,0 +1,12 @@
+{% extends "dashboard/base.html" %} 
+
+
+{% block content %}
+ <h2>משרדי פרסום</h2>
+    <ul>
+        {% for agency in all_agencies %}
+            <li><a href="/dashboard/advertising-agency/{{agency.id}}">{{agency.name}}</a></li>
+        {% endfor %}
+    </ul>
+    {% include "dashboard/components/new_agency.html" %}
+{%endblock%}

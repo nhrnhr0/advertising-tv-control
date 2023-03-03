@@ -498,7 +498,6 @@
         publisherChanged(page_size);
     }
     function getBroadcasts(api_url=`/dashboard/publishers/all/broadcasts/?not_in_tv={{tv.id}}&page_size=10`) {
-            debugger;
             fetch(api_url)
             .then(response => response.json())
             .then(data => {
