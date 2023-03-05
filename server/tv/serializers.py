@@ -26,8 +26,12 @@ class TvSerializer(serializers.ModelSerializer):
     
     broadcasts = serializers.SerializerMethodField()
     def get_broadcasts(self, obj):
-        qset = BroadcastInTv.objects.select_related('tv', 'broadcast').filter(Q(tv=obj) and Q(active=True) and ~Q(broadcast__media_type='unknown') and Q(plays_left__gt=0)
-                                                                              ).order_by('order')
+        qset = BroadcastInTv.objects.select_related('tv', 'broadcast')
+        qset = qset.filter(tv=obj)
+        qset= qset.filter(active=True)
+        qset = qset.filter(~Q(broadcast__media_type='unknown'))
+        qset = qset.filter(plays_left__gt=0)
+        qset = qset.order_by('order')
         serializer = BroadcastInTvSerializer(qset, many=True)
         return serializer.data
     class Meta:
