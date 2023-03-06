@@ -5,6 +5,7 @@ from .views import main_dashboard_view
 from .views import dashboard_publishers_view,publishers_add_view, publishers_detail, dashboard_publishers_detail_add_broadcast,publishers_detail_edit
 from .views import dashboard_tvs_view, tvs_add_view,tvs_detail,tvs_detail_edit,dashboard_publishers_broadcasts_api,tvs_detail_add_broadcast,tvs_detail_change_left_plays
 from .views_adv_agency import dashboard_adv_agency_view,adv_agency_detail_view,adv_agency_detail_edit
+from .views_info import info_dashboard_view,info_played_broadcasts_api
 urlpatterns = [
     
     path('', main_dashboard_view, name='main_dashboard_view'),
@@ -27,4 +28,7 @@ urlpatterns = [
     path('advertising-agency/add/', dashboard_adv_agency_view, name='dashboard_adv_agency_add_view'),
     path('advertising-agency/<int:id>/', adv_agency_detail_view, name='dashboard_adv_agency_detail'),
     path('advertising-agency/<int:id>/edit/', adv_agency_detail_edit, name='dashboard_adv_agency_detail_edit'),
+    
+    path('info/', info_dashboard_view, name='info_dashboard_view'),
+    path('info/played_broadcasts_api/',info_played_broadcasts_api, name='info_played_broadcasts_api')
 ]

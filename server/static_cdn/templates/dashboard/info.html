@@ -1,0 +1,144 @@
+{% extends "dashboard/base.html" %}
+{% block headcontent %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+
+<!-- jquery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"
+    integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+<!-- chart js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-moment/1.0.1/chartjs-adapter-moment.min.js">
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.0/chartjs-plugin-zoom.min.js"></script>
+
+</script>
+{% endblock %}
+{% block content %}
+<h2>מידע</h2>
+<div class="canvas-container">
+    <canvas id="myChart"></canvas>
+</div>
+<script>
+    let chart;
+    // load the info from dashboard/info/played_broadcasts_api
+    $.getJSON('/dashboard/info/played_broadcasts_api/').then(function (data) {
+        console.log('data', data)
+        // [
+        //     [
+        //     "uuid",
+        //     "tv_id",
+        //     "tv_name",
+        //     "broadcast_id",
+        //     "broadcast_name",
+        //     "time"
+        //     ],
+        //     {
+        //     "uuid": "42fac1cd4b3c56b303ab1ae9c94536e5",
+        //     "tv__id": 2,
+        //     "tv__name": "TV2",
+        //     "broadcast__id": 4,
+        //     "broadcast__name": "Bitmap.png",
+        //     "time": "2023-03-06T08:06:35.875Z"
+        //     },
+        //     {........
+        const colors_hex = ['#FF6384', '#36A2EB', '#FFCE56', '#FF0000', '#00FF00', '#0000FF', '#FFFF00',
+            '#00FFFF', '#FF00FF', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080',
+            '#C0C0C0', '#808080', '#9999FF', '#993366', '#FFFFCC', '#CCFFFF', '#660066', '#FF8080',
+            '#0066CC', '#CCCCFF', '#000080', '#FF00FF', '#FFFF00', '#00FFFF', '#800080', '#800000',
+            '#008080', '#0000FF', '#00CCFF', '#CCFFFF', '#CCFFCC', '#FFFF99', '#99CCFF', '#FF99CC',
+            '#CC99FF', '#FFCC99', '#3366FF', '#33CCCC', '#99CC00', '#FFCC00', '#FF9900', '#FF6600',
+            '#666699', '#969696', '#003366', '#339966', '#003300', '#333300', '#993300', '#993366',
+            '#333399', '#333333'
+        ];
+        let chart_data = {
+            labels: [],
+            datasets: []
+        };
+
+        // loop over the data and add the labels and data to the chart_data
+        // every tv is a different dataset 
+        let tvs = [];
+        for (let i = 1; i < data.length; i++) {
+            if (!tvs.includes(data[i][2])) {
+                tvs.push(data[i][2]);
+                chart_data.datasets.push({
+                    label: data[i][2],
+                    data: [],
+                    backgroundColor: colors_hex[tvs.length - 1],
+                    borderColor: colors_hex[tvs.length - 1],
+                    fill: false,
+                    lineTension: 0,
+                    pointRadius: 0,
+                    borderWidth: 1,
+                });
+            }
+        }
+        // add the time palyed to the chart_data
+        for (let i = 1; i < data.length; i++) {
+            chart_data.labels.push(data[i][5]);
+            chart_data.datasets[tvs.indexOf(data[i][2])].data.push({x:data[i][5], y:1});
+        }
+
+
+
+        // create the chart
+        const ctx = document.getElementById('myChart');
+
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: chart_data,
+            options: {
+                scales: {
+                    x: {
+                        // type: 'timeseries',
+                        // time: {
+                        //     unit: 'day',
+                        //     displayFormats: {
+                        //         day: 'DD/MM/YYYY'
+                        //     }
+                        // },
+                        type: 'time',
+                        time: {
+                            // Luxon format string
+                            // tooltipFormat: 'DD T'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    }
+                },
+
+                plugins: {
+                    zoom: {
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'xy',
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+<style>
+    .canvas-container {
+        position: relative;
+        height: 60vh;
+        width: 60vw;
+    }
+</style>
+{%endblock%}
