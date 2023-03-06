@@ -216,12 +216,14 @@ def tvs_add_view(request):
 from django.core.paginator import Paginator
 
 def tvs_detail(request, id):
-    from tv.models import Tv
+    from tv.models import Tv, BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
-    broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
+    # broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
+    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order')
+
     publishers = Publisher.objects.all()
     # broadcasts_paginator = Paginator(broadcasts, page_size)
     
@@ -229,9 +231,8 @@ def tvs_detail(request, id):
     context = {
         'tv': tv,
         # 'broadcasts': broadcasts,
-        'broadcasts': broadcasts,
+        'broadcasts_in_tv':broadcasts_in_tv,
         'publishers': publishers,
-        # 'paginators_page_obj': broadcasts_paginator.get_page(broadcasts_page_number),
         'business_types': business_types,
     }
     return render(request, 'dashboard/tvs_detail.html', context)
@@ -276,7 +277,7 @@ def tvs_detail_change_left_plays(request, id):
     return redirect('dashboard_tvs_detail', id=id)
 
 def tvs_detail_edit(request, id):
-    from tv.models import Tv
+    from tv.models import Tv,BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=id)
@@ -365,12 +366,14 @@ def tvs_detail_edit(request, id):
             active = request.POST.get('broadcast_'+existing_b_id+'_active')
             order = request.POST.get('broadcast_'+existing_b_id+'_order')
             # existing_btv_id = existing_broadcasts_in_tvs_ids[existing_broadcasts_ids.index(existing_b_id)]
-            obj = tv.broadcasts.get(id=existing_b_id)
-            broad_in_tv = obj.broadcast_in_tv.first()
-            broad_in_tv.duration = float(duration)
-            broad_in_tv.active = active == 'on'
-            broad_in_tv.order = int(order)
-            broad_in_tv.save()
+            # obj = tv.broadcasts.get(id=existing_b_id)
+            broadcast_id = existing_b_id
+            tv_id = id
+            obj = BroadcastInTv.objects.get(broadcast_id=broadcast_id, tv_id=tv_id)
+            # broad_in_tv = obj.broadcast_in_tv.first()
+            obj.duration = float(duration)
+            obj.active = active == 'on'
+            obj.order = int(order)
             obj.save()
         tv.save()
     return redirect('dashboard_tvs_detail', id=id)

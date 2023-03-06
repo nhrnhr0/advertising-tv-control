@@ -221,27 +221,27 @@
             </thead>
 
             <tbody>
-                {% for broadcast in broadcasts %}
+                {% for b_in_tv in broadcasts_in_tv %}
                 <tr>
                     <td>
-                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{broadcast.id}}">
+                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{b_in_tv.broadcast.id}}">
                         <input type="hidden" name="existing_broadcasts_in_tvs_ids[]"
-                            value="{{broadcast.broadcast_in_tv.first.id}}">
+                            value="{{b_in_tv.id}}">
                         {{forloop.counter}}
                     </td>
                     <td>
-                        {{broadcast.name|truncatechars:20}}
+                        {{b_in_tv.broadcast.name|truncatechars:20}}
                     </td>
                     <td>
-                        {% if broadcast.media_type == 'image' %}
+                        {% if b_in_tv.broadcast.media_type == 'image' %}
                         <div class="imageWrapper">
-                            <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
+                            <img src="{{b_in_tv.broadcast.media.url}}" alt="{{b_in_tv.broadcast.name}}">
                         </div>
                         תמונה
                         {% else %}
                         <div class="videoWrapper">
                             <video muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;" loop>
-                                <source src="{{broadcast.media.url}}" type="video/mp4">
+                                <source src="{{b_in_tv.broadcast.media.url}}" type="video/mp4">
                             </video>
                         </div>
                         סרטון
@@ -250,37 +250,31 @@
 
                     </td>
                     <td>
-                        {{broadcast.publisher.first.name}}
+                        {{b_in_tv.broadcast.publisher.first.name}}
                     </td>
                     <td>
-                        <!-- {{broadcast.broadcast_in_tv.first.duration}} -->
-                        <input type="number" name="broadcast_{{broadcast.id}}_duration"
-                            value="{{broadcast.broadcast_in_tv.first.duration}}">
+                        <input type="number" name="broadcast_{{b_in_tv.broadcast.id}}_duration"
+                            value="{{b_in_tv.duration}}">
                     </td>
                     <td>
-                        <input type="checkbox" name="broadcast_{{broadcast.id}}_active"
-                            {% if broadcast.broadcast_in_tv.first.active %}checked{% endif %}>
-                        <!-- {% if broadcast.broadcast_in_tv.first.active %}
-                                    כן
-                                {% else %}
-                                    לא
-                                {% endif %} -->
+                        <input type="checkbox" name="broadcast_{{b_in_tv.broadcast.id}}_active"
+                            {% if b_in_tv.active %}checked{% endif %}>
                     </td>
                     <td>
-                        {{broadcast.broadcast_in_tv.first.plays_left}}
+                        {{b_in_tv.plays_left}}
                     </td>
                     <td>
-                        <a href="/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/delete/" target="popup"
-                            onclick="window.open('/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/delete/','popup','width=600,height=600'); return false;">מחק</a>
-                        <a href="/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/change/" target="popup"
-                            onclick="window.open('/admin/tv/broadcastintv/{{broadcast.broadcast_in_tv.first.id}}/change/','popup','width=600,height=600'); return false;">ערוך</a>
-                        <button type="button" onclick="changeLeftPlays({{broadcast.broadcast_in_tv.first.id}})">
+                        <a href="/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/" target="popup"
+                            onclick="window.open('/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/','popup','width=600,height=600'); return false;">מחק</a>
+                        <a href="/admin/tv/broadcastintv/{{b_in_tv.id}}/change/" target="popup"
+                            onclick="window.open('/admin/tv/broadcastintv/{{b_in_tv.id}}/change/','popup','width=600,height=600'); return false;">ערוך</a>
+                        <button type="button" onclick="changeLeftPlays({{b_in_tv.id}})">
                             שנה כמות שידורים שנישארו
                         </button>
                     </td>
                     <td>
-                        <input type="number" name="broadcast_{{broadcast.id}}_order"
-                            value="{{broadcast.broadcast_in_tv.first.order}}">
+                        <input type="number" name="broadcast_{{b_in_tv.broadcast.id}}_order"
+                            value="{{b_in_tv.order}}">
                     </td>
                 </tr>
                 {% endfor %}
