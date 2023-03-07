@@ -14,7 +14,7 @@ class openingHoursInline(admin.TabularInline):
 
 # Tv admin
 class TvAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__is_socket_connected_live', 'pi__humanize_socket_status_updated_ago',)
+    list_display = ('id','name', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__humanize_socket_status_updated_ago',)
     inlines = [BroadcastInline, openingHoursInline]
 admin.site.register(Tv, TvAdmin)
 class BroadcastAdmin(admin.ModelAdmin):

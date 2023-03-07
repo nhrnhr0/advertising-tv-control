@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from jsonfield import JSONField
-
+from django.conf import settings
 class Broadcast(models.Model):
     # defult name is the media file name
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -112,6 +112,12 @@ class Tv(models.Model):
             return True
         return False
     
+    def get_display_url_with_key(self):
+        url = f"{settings.FRONTEND_BASE_URL}/tv-display/{self.id}/"
+        if self.uri_key:
+            url = f"{url}?key={self.uri_key}"
+        return url
+    
     def is_opening_hours_active(self):
         if self.manual_turn_off:
             return False
@@ -148,13 +154,7 @@ class Tv(models.Model):
         else:
             return 'Not set'
     pi__cec_hdmi_status.short_description = 'HDMI'
-    def pi__is_socket_connected_live(self):
-        if self.pi:
-            return self.pi.is_socket_connected_live()
-        else:
-            return False
-    pi__is_socket_connected_live.boolean = True
-    pi__is_socket_connected_live.short_description = 'Socket connected'
+    
     def pi__humanize_socket_status_updated_ago(self):
         if self.pi:
             return self.pi.humanize_socket_status_updated_ago()
