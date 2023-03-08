@@ -5,6 +5,11 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from jsonfield import JSONField
 from django.conf import settings
+import json
+
+from server.telegram_bot_interface import send_admin_message
+from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from server.settings.secrects import BASE_MY_DOMAIN
 class Broadcast(models.Model):
     # defult name is the media file name
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -42,15 +47,41 @@ class BroadcastInTv(models.Model):
     order = models.IntegerField(default=10)
     active = models.BooleanField(default=True)
     plays_left = models.IntegerField(default=0)
+    telegram_notification_in = models.IntegerField(default=0)
+    telegram_notification_sent = models.BooleanField(default=False)
     
     # def get_absolute_url(self):
     #     return f"/tv/{self.tv.id}/broadcast/{self.id}"
+    
+    def plays_left_for_notification(self):
+        return self.plays_left - self.telegram_notification_in
     
     def __str__(self):
         return f'{self.broadcast.name}: {self.duration}'
     class Meta:
         ordering = ['order', '-created',]
-    
+        
+    def need_to_send_telegram_notification(self):
+        if self.plays_left <= self.telegram_notification_in and not self.telegram_notification_sent:
+            return True
+        return False
+    def send_telegram_notification(self):
+        
+        callback_data_broadcast_reminder_half = json.dumps({'action':'notification_half','id':self.id})
+        callback_data_broadcast_reminder_0 = json.dumps({'action':'notification_0','id':self.id})
+        
+        send_admin_message(f'שידור <b>{self.broadcast.name}</b> בטלוויזיה <b>{self.tv.name}</b> יפוג בעוד <b>{self.plays_left}</b> שידורים. \n<a href="{BASE_MY_DOMAIN}{self.tv.get_dashboard_url()}">לטלוויזיה</a>',reply_markup=
+                           InlineKeyboardMarkup([[
+                               InlineKeyboardButton(
+                                      text="הזכר לי בחצי" ,
+                                        callback_data=callback_data_broadcast_reminder_half
+                                 ),
+                                InlineKeyboardButton(
+                                      text="הזכר לי ב0" ,
+                                        callback_data=callback_data_broadcast_reminder_0
+                                 ),
+                            ]]), parse_mode=ParseMode.HTML,asset=self.broadcast.media,asset_type=self.broadcast.media_type)
+        self.telegram_notification_sent = True
     
 
 
@@ -104,7 +135,8 @@ class Tv(models.Model):
         return f"/tv/{self.id}"
     def __str__(self):
         return self.name
-    
+    def get_dashboard_url(self):
+        return f"/dashboard/tvs/{self.id}/"
     def is_in_opening_hours(self,time):
         # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
         weekday = (time.weekday() + 2)%7

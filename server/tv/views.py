@@ -65,7 +65,9 @@ def save_broadcasts_played(request):
                         if broadcast_in_tv.plays_left <= 0:
                             # broadcast_in_tv.plays_left = 0
                             broadcast_in_tv.is_active = False
-
+                        if broadcast_in_tv.need_to_send_telegram_notification():
+                            broadcast_in_tv.send_telegram_notification()
+                        
                         broadcast_in_tv.save()
                 except Exception as e:
                     print(e)

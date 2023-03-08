@@ -271,6 +271,8 @@ def tvs_detail_change_left_plays(request, id):
             plays = '0'
         broadcast_in_tv_obj = BroadcastInTv.objects.get(id=broadcast_in_tv_id)
         broadcast_in_tv_obj.plays_left = broadcast_in_tv_obj.plays_left + int(plays)
+        broadcast_in_tv_obj.telegram_notification_in = int((broadcast_in_tv_obj.plays_left or 1) / 2)
+        broadcast_in_tv_obj.telegram_notification_sent = False
         broadcast_in_tv_obj.save()
         tv.save()
         return redirect('dashboard_tvs_detail', id=id)
