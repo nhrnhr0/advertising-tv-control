@@ -10,6 +10,7 @@ FRONTEND_BASE_URL = 'https://kehilaton.boost-pop.com'
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-598jv2*q+s4$rq3erkbei=9hz3%ozlecn$16zt=*0d-4#9+taw"
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760 # 5MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000
 DEFAULT_PAGE_SIZE = 10
 LANGUAGE_CODE = 'he'
