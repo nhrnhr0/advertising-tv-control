@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # 3rd party apps
     'rest_framework',
-
+    'celery',
+    'django_celery_beat',
+    'django_celery_results',
     # "daphne",  # for channels
     'channels',
     # my apps

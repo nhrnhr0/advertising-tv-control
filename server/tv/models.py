@@ -7,6 +7,8 @@ from jsonfield import JSONField
 from django.conf import settings
 import json
 
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 from server.telegram_bot_interface import send_admin_message
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from server.settings.secrects import BASE_MY_DOMAIN

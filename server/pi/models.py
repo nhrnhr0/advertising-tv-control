@@ -19,6 +19,7 @@ class PiDevice(models.Model):
     socket_status_updated = models.DateTimeField(null=True)
     cec_hdmi_status = models.CharField(max_length=100, default='unknown')
     is_approved = models.BooleanField(default=False)
+    telegram_connection_error_sent = models.BooleanField(default=False)
     def get_tv_display_url_with_key(self):
         if self.tv:
             return self.tv.get_display_url_with_key()
