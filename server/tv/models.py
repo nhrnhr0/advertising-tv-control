@@ -48,6 +48,7 @@ class BroadcastInTv(models.Model):
     duration = models.FloatField(default=20.0)
     order = models.IntegerField(default=10)
     active = models.BooleanField(default=True)
+    master = models.BooleanField(default=False)
     plays_left = models.IntegerField(default=0)
     telegram_notification_in = models.IntegerField(default=0)
     telegram_notification_sent = models.BooleanField(default=False)

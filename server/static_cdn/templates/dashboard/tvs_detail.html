@@ -210,6 +210,9 @@
                     פעיל
                 </th>
                 <th>
+                    מאסטר
+                </th>
+                <th>
                     כמות שידורים שנישארו
                 </th>
                 <th>
@@ -227,7 +230,7 @@
                 {% for b_in_tv in broadcasts_in_tv %}
                 <tr>
                     <td>
-                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{b_in_tv.broadcast.id}}">
+                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{b_in_tv.id}}">
                         <input type="hidden" name="existing_broadcasts_in_tvs_ids[]"
                             value="{{b_in_tv.id}}">
                         {{forloop.counter}}
@@ -256,12 +259,16 @@
                         {{b_in_tv.broadcast.publisher.first.name}}
                     </td>
                     <td>
-                        <input type="number" step="0.01" name="broadcast_{{b_in_tv.broadcast.id}}_duration"
+                        <input type="number" step="0.01" name="b_in_tv_{{b_in_tv.id}}_duration"
                             value="{{b_in_tv.duration}}">
                     </td>
                     <td>
-                        <input type="checkbox" name="broadcast_{{b_in_tv.broadcast.id}}_active"
+                        <input type="checkbox" name="b_in_tv_{{b_in_tv.id}}_active"
                             {% if b_in_tv.active %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="b_in_tv_{{b_in_tv.id}}_master"
+                            {% if b_in_tv.master %}checked{% endif %}>
                     </td>
                     <td>
                         {{b_in_tv.plays_left}}
@@ -291,7 +298,7 @@
                         </button>
                     </td>
                     <td>
-                        <input type="number" name="broadcast_{{b_in_tv.broadcast.id}}_order"
+                        <input type="number" name="b_in_tv_{{b_in_tv.id}}_order"
                             value="{{b_in_tv.order}}">
                     </td>
                 </tr>
@@ -523,16 +530,16 @@
                 broadcastsSelect.innerHTML = '';
 
                 // make sure we only display broadcasts that are not already added
-                let existing_broadcasts_ids = [];
-                let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
-                for (var i = 0; i < ids_inputs.length; i++) {
-                    existing_broadcasts_ids.push(ids_inputs[i].value);
-                }
+                // let existing_broadcasts_ids = [];
+                // let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
+                // for (var i = 0; i < ids_inputs.length; i++) {
+                //     existing_broadcasts_ids.push(ids_inputs[i].value);
+                // }
                 for (var i = 0; i < broadcasts.length; i++) {
                     // if broadcast is already added, skip it
-                    if (existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
-                        continue;
-                    }
+                    // if (existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
+                    //     continue;
+                    // }
 
                     let card = `<div class="broadcast-card"><h3>${broadcasts[i].name}</h3>`
                     if (broadcasts[i].media_type == 'video') {

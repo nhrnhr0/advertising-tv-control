@@ -128,3 +128,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+
+
+MAX_PLAYLIST_DURATION = 10 * 60

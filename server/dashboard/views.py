@@ -362,20 +362,22 @@ def tvs_detail_edit(request, id):
         
         
         # saving table information
-        existing_broadcasts_ids = request.POST.getlist('existing_broadcasts_ids[]')
-        for existing_b_id in existing_broadcasts_ids:
-            duration = request.POST.get('broadcast_'+existing_b_id+'_duration')
-            active = request.POST.get('broadcast_'+existing_b_id+'_active')
-            order = request.POST.get('broadcast_'+existing_b_id+'_order')
+        existing_broadcasts_in_tvs_ids = request.POST.getlist('existing_broadcasts_in_tvs_ids[]')
+        for existing_broadcast_in_tv_id in existing_broadcasts_in_tvs_ids:
+            duration = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_duration')
+            active = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_active')
+            order = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_order')
+            master = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_master')
             # existing_btv_id = existing_broadcasts_in_tvs_ids[existing_broadcasts_ids.index(existing_b_id)]
             # obj = tv.broadcasts.get(id=existing_b_id)
-            broadcast_id = existing_b_id
-            tv_id = id
-            obj = BroadcastInTv.objects.get(broadcast_id=broadcast_id, tv_id=tv_id)
+            # broadcast_id = existing_b_id
+            # tv_id = id
+            obj = BroadcastInTv.objects.get(id=existing_broadcast_in_tv_id)
             # broad_in_tv = obj.broadcast_in_tv.first()
             obj.duration = float(duration)
             obj.active = active == 'on'
             obj.order = int(order)
+            obj.master = master == 'on'
             obj.save()
         tv.save()
     return redirect('dashboard_tvs_detail', id=id)
