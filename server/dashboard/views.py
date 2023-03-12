@@ -5,11 +5,13 @@ from dashboard.serializers import PublisherAssetsSerializer
 from tv.models import AdvertisingAgency
 from tv.models import BusinessType
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.core import serializers
 from core.models import Publisher, PublisherType
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from django.utils import timezone
+
 def main_dashboard_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
@@ -246,6 +248,8 @@ def tvs_detail_add_broadcast(request, id):
         broadcast_id = request.POST.get('broadcast_id')
         broadcast = Broadcast.objects.get(id=broadcast_id)
         plays = request.POST.get('plays_count')
+        price = request.POST.get('price')
+        note = request.POST.get('note')
         if not plays:
             plays = 0
         # temp = tv.broadcasts.order_by('-broadcast_in_tv__order').first()
@@ -255,9 +259,25 @@ def tvs_detail_add_broadcast(request, id):
             max_order = 0
         order = max_order + 10
         tv.broadcasts.add(broadcast, through_defaults={'plays_left': plays, 'active': False, 'order': order})
+        broadcast.history.append({'user_id':request.user.id, 'action':'add_to_tv', 'note':note, 'price':price, 'plays':plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
+        broadcast.save()
         tv.save()
         return redirect('dashboard_tvs_detail', id=id)
     return redirect('dashboard_tvs_detail', id=id)
+
+def tvs_detail_delete_broadcast_in_tv(request, tv_id, broadcast_in_tv_id):
+    # handle xhr request and retuern 200 ok or 400 bad request
+    from tv.models import Tv, BroadcastInTv
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('/admin/login/?next=' + request.path)
+    tv = Tv.objects.get(id=tv_id)
+    broadcast_in_tv = BroadcastInTv.objects.get(id=broadcast_in_tv_id)
+    broadcast = broadcast_in_tv.broadcast
+    plays = broadcast_in_tv.plays_left
+    broadcast_in_tv.delete()
+    broadcast.history.append({'user_id':request.user.id, 'action':'delete_from_tv', 'note':'', 'price':'', 'plays':plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
+    broadcast.save()
+    return HttpResponse('ok')
 
 def tvs_detail_change_left_plays(request, id):
     from tv.models import Tv, Broadcast, BroadcastInTv
@@ -267,12 +287,18 @@ def tvs_detail_change_left_plays(request, id):
     if request.method == 'POST':
         broadcast_in_tv_id = request.POST.get('broadcast_in_tv_id')
         plays = request.POST.get('plays_count')
+        price = request.POST.get('price')
+        note = request.POST.get('note')
         if not plays:
             plays = '0'
         broadcast_in_tv_obj = BroadcastInTv.objects.get(id=broadcast_in_tv_id)
+        plays_before = broadcast_in_tv_obj.plays_left
         broadcast_in_tv_obj.plays_left = broadcast_in_tv_obj.plays_left + int(plays)
         broadcast_in_tv_obj.telegram_notification_in = int((broadcast_in_tv_obj.plays_left or 1) / 2)
         broadcast_in_tv_obj.telegram_notification_sent = False
+        
+        broadcast_in_tv_obj.broadcast.history.append({'user_id':request.user.id, 'action':'change_left_plays','price':price, 'note': note,'plays':broadcast_in_tv_obj.plays_left, 'plays_before':plays_before, 'plays_added': plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
+        broadcast_in_tv_obj.broadcast.save()
         broadcast_in_tv_obj.save()
         tv.save()
         return redirect('dashboard_tvs_detail', id=id)

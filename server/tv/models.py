@@ -19,6 +19,8 @@ class Broadcast(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     media = models.FileField(upload_to='broadcasts/', blank=True, null=True)
     media_type = models.CharField(max_length=100, blank=True, null=True)
+    history = JSONField(default=list, blank=True, null=True)
+    
     class Meta:
         ordering = ['-created',]
     def __str__(self):
@@ -52,6 +54,12 @@ class BroadcastInTv(models.Model):
     plays_left = models.IntegerField(default=0)
     telegram_notification_in = models.IntegerField(default=0)
     telegram_notification_sent = models.BooleanField(default=False)
+    
+    def get_broadcasts_history(self):
+        ret = self.broadcast.history
+        # filter by tv
+        ret = [x for x in ret if x['tv_id'] == self.tv.id]
+        return ret
     
     # def get_absolute_url(self):
     #     return f"/tv/{self.tv.id}/broadcast/{self.id}"
