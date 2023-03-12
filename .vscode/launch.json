@@ -9,8 +9,7 @@
         "request": "launch",
         "program": "${workspaceFolder}\\server\\manage.py",
         "args": [
-            "runserver", "8000",
-            "--settings=server.settings.dev"
+            "runserver", "8000", "--settings=server.settings.dev"
         ],
         "django": true,
         "justMyCode": true

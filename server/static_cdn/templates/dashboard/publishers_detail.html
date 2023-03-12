@@ -152,11 +152,20 @@
                     onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a>
             </td>
             <td>
+                <ul>
                 {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
-                <span>{{broad_in_tv.tv}}</span>
+                <li>
+                <span>
+                    <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
+                        {{broad_in_tv.tv}}
+                    </a>
+                </span>
                 {% empty %}
                 <span>לא פעיל בשום טלוויזיה</span>
+                </li>
                 {% endfor %}
+                
+                </ul>
             </td>
             <td>
                 <button class="history-button" type="button" >

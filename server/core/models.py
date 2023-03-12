@@ -19,7 +19,6 @@ class Publisher(models.Model):
     # )
     name = models.CharField(max_length=100)
     broadcasts = models.ManyToManyField('tv.Broadcast', blank=True, related_name='publisher')
-    
     about = models.TextField(blank=True)
     geojson = JSONField(blank=True, null=True)
     publishers_types = models.ManyToManyField(PublisherType, blank=True, related_name='publishers', verbose_name=_('publishers types'))
@@ -32,6 +31,9 @@ class Publisher(models.Model):
     qr_link = models.CharField(max_length=100, blank=True, verbose_name=_('QR link'))
     adv_agency = models.ForeignKey('tv.AdvertisingAgency', on_delete=models.CASCADE, blank=True, null=True, related_name='publishers')
     pass
+
+    def active_broadcasts(self):
+        return self.broadcasts.filter(broadcast_in_tv__active=True, broadcast_in_tv__plays_left__gt=0)
 
 
 
