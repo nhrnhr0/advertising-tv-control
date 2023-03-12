@@ -8,7 +8,7 @@ import requests
 # from pi.storage import OverwriteStorage
 # Create your models here.
 def image_path(instance, filename):
-    return os.path.join('last_images', str(instance.id), 'image.jpg')
+    return os.path.join('last_images', str(instance.id), 'image_{}.jpg'.format(timezone.now().strftime('%Y-%m-%d_%H-%M-%S')))
 
 
 class PiDevice(models.Model):
