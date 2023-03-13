@@ -5,9 +5,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=sammy
-WorkingDirectory=/home/ubuntu/advertising-tv-constol
-ExecStart=/home/ubuntu/advertising-tv-constol/env/bin/daphne -b 0.0.0.0 -p 8000 server.asgi:application
+User=ubuntu
+WorkingDirectory=/home/ubuntu/advertising-tv-control/server
+ExecStart=/home/ubuntu/advertising-tv-control/env/bin/daphne -b 0.0.0.0 -p 8000 server.asgi:application
 
 [Install]
 WantedBy=multi-user.target
