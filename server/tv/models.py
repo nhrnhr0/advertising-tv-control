@@ -8,6 +8,7 @@ from django.conf import settings
 import json
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from server.settings.secrects import FRONTEND_BASE_URL
 
 from server.telegram_bot_interface import send_admin_message
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
@@ -156,7 +157,7 @@ class Tv(models.Model):
         return False
     
     def get_display_url_with_key(self):
-        url = f"{settings.FRONTEND_BASE_URL}/tv-display/{self.id}/"
+        url = f"{FRONTEND_BASE_URL}/tv-display/{self.id}/"
         if self.uri_key:
             url = f"{url}?key={self.uri_key}"
         return url
