@@ -3,7 +3,6 @@ from django.utils import timezone
 import humanize
 from django.utils.safestring import mark_safe
 import os
-from server.settings.secrects import PI_MONITOR_SERVER_URL
 import requests
 
 
@@ -30,6 +29,7 @@ class PiDevice(models.Model):
     group_channel_name = models.CharField(max_length=100, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
     telegram_connection_error_sent = models.BooleanField(default=False)
+    image_updated = models.DateTimeField(null=True, blank=True)
     def get_tv_display_url_with_key(self):
         if self.tv:
             return self.tv.get_display_url_with_key()

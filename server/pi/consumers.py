@@ -151,11 +151,13 @@ class ChatConsumer(WebsocketConsumer):
         message_type = text_data_json['type']
 
         # fixme: uncomment this and remove line 14
-        raw_image = text_data_json['data']['img']
-        raw_image = base64.b64decode(raw_image)
-
+        raw_image = text_data_json['data'].get('img')
+        if raw_image:
+            raw_image = base64.b64decode(raw_image)
+            remote_last_image = ImageFile(io.BytesIO(raw_image), 'image.jpg')
+        else:
+            remote_last_image = None
         cec_hdmi_status = text_data_json['data']['hdmi_status']
-        remote_last_image = ImageFile(io.BytesIO(raw_image), 'image.jpg')
         socket_status_updated = timezone.now()
         is_socket_connected = True
         
