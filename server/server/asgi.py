@@ -20,11 +20,8 @@ from pi import routing
 
 # application = get_asgi_application()
 application = ProtocolTypeRouter({
-    'http': django_asgi_app,
-    # 'websocket': AuthMiddlewareStack(
-    #     URLRouter(
-    #         routing.websocket_urlpatterns
-    #     )
-    # ),
-    'websocket': URLRouter(routing.websocket_urlpatterns)
-})
+    "http": django_asgi_app,
+    "websocket": AuthMiddlewareStack(
+                 URLRouter(routing.websocket_urlpatterns)
+        )
+    })
