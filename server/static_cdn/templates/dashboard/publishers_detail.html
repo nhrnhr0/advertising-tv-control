@@ -110,7 +110,7 @@
             <th>סוג השידור</th>
             <th>פעולות</th>
             <th>טלוויזיות</th>
-            <th>קישור QR</th>
+            <th>היסטוריה</th>
         </tr>
     </thead>
     <tbody>
@@ -152,11 +152,125 @@
                     onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a>
             </td>
             <td>
+                <ul>
                 {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
-                <span>{{broad_in_tv.tv}}</span>
+                <li>
+                <span>
+                    <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
+                        {{broad_in_tv.tv}}
+                    </a>
+                </span>
                 {% empty %}
                 <span>לא פעיל בשום טלוויזיה</span>
+                </li>
                 {% endfor %}
+                
+                </ul>
+            </td>
+            <td>
+                <button class="history-button" type="button" >
+                    היסטוריה ({{broadcast.history|length}})
+                </button>
+                <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        תאריך
+                                    </th>
+                                    <th>
+                                        טלוויזיה
+                                    </th>
+                                    <th>
+                                        פעולה
+                                    </th>
+                                    <th>
+                                        כמות לפני
+                                    </th>
+                                    <th>
+                                        כמות שהוספה
+                                    </th>
+                                    <th>
+                                        כמות חדשה
+                                    </th>
+                                    <th>
+                                        מחיר מכירה
+                                    </th>
+                                    <th>
+                                        הערה
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- iterate broadcast history in reverse -->
+                                {% for history in broadcast.history reversed %}
+                                <tr>
+                                    <td>
+                                        <script type="text/javascript">
+                                            var date = "{{history.time}}";
+                                            date = date.replace("Z", "");
+                                            date = new Date(date);
+                                            date = new Intl.DateTimeFormat('he-IL', {
+                                                year: 'numeric',
+                                                month: 'numeric',
+                                                day: 'numeric',
+                                                hour: 'numeric',
+                                                minute: 'numeric',
+                                                second: 'numeric',
+                                                hour12: false
+                                            }).format(date);
+                                            document.write(date);
+                                        </script>
+                                    </td>
+                                    <td>
+                                        {{history.tv_name}}
+                                    </td>
+                                    <td>
+                                        {%if history.action == 'add_to_tv' %}
+                                            הוסף לטלוויזיה
+                                        {% elif history.action == 'change_left_plays' %}
+                                            שינוי כמות
+                                        {% endif %}
+                                    </td>
+                                    {%if history.action == 'add_to_tv' %}
+                                        <td>
+                                            -
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                    {% elif history.action == 'change_left_plays' %}
+                                        <td>
+                                            {{history.plays_before}}
+                                        </td>
+                                        <td>
+                                            {%if history.plays_added > 0 %}
+                                                +{{history.plays_added}}
+                                            {% else %}
+                                                {{history.plays_added}}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                    {% endif %}
+                                    <td>
+                                        {%if history.price %}
+                                            {{history.price}} ש"ח
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{history.note}}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
             </td>
         </tr>
         {% endfor %}
@@ -289,4 +403,25 @@
     initMap();
     initAutoComplete();
 </script>
+
+<style>
+    
+    .history-button:hover + .history-table,
+    .history-button:active + .history-table {
+        visibility: visible;
+    }
+
+
+    .history-table{
+        position: absolute;
+        transform: translate(50%, 0);
+        background-color: white;
+        visibility: hidden;
+        z-index: 1000;
+    }
+    .history-table:hover {
+        visibility: visible;
+    }
+
+</style>
 {% endblock %}

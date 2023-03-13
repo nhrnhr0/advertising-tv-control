@@ -1,3 +1,4 @@
+
 """server URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -12,14 +13,17 @@ Class-based views
 Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+
 """
+from server.telegram_bot_interface import init_bot # https://stackoverflow.com/questions/6791911/execute-code-when-django-starts-once-only
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from tv.views import save_broadcasts_played
 from django.contrib.auth import views as auth_views
-from core.views import pi_screenshot_view
+from core.views import pi_screenshot_view,telegram_webhook_view
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
@@ -27,6 +31,7 @@ urlpatterns = [
     path('api/broadcasts-played/', save_broadcasts_played, name='save_broadcasts_played'),
     path('dashboard/', include('dashboard.urls')),
     path('pi_screenshot/<str:pi_key>/', pi_screenshot_view, name='pi_screenshot'),
+    path('telegram-webhook/', telegram_webhook_view, name='telegram_webhook'),
 ]
 
 
@@ -36,3 +41,8 @@ if settings.DEBUG:
         static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns = urlpatterns + \
         static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+        
+        
+
+
+init_bot()

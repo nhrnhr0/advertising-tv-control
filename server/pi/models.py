@@ -5,26 +5,43 @@ from django.utils.safestring import mark_safe
 import os
 from server.settings.secrects import PI_MONITOR_SERVER_URL
 import requests
+
+
+# class SocketDeviceIds(models.Model):
+#     device_id = models.CharField(max_length=100, unique=True)
+#     connections_count = models.IntegerField(default=0)
+#     is_approved = models.BooleanField(default=False)
+#     date_added = models.DateTimeField(default=timezone.now)
+
+
+
 # from pi.storage import OverwriteStorage
 # Create your models here.
 def image_path(instance, filename):
-    return os.path.join('last_images', str(instance.id), 'image.jpg')
+    return os.path.join('last_images', str(instance.id), 'image_{}.jpg'.format(timezone.now().strftime('%Y-%m-%d_%H-%M-%S')))
 
 
 class PiDevice(models.Model):
     device_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100, blank=True, null=True)
-    remote_last_image = models.ImageField(upload_to=image_path, blank=True, null=True)  # , storage=OverwriteStorage())
-    image_updated = models.DateTimeField(null=True, blank=True)
+    remote_last_image = models.ImageField(upload_to=image_path, blank=True, null=True)
     socket_status_updated = models.DateTimeField(null=True)
     cec_hdmi_status = models.CharField(max_length=100, default='unknown')
+    group_channel_name = models.CharField(max_length=100, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
+    telegram_connection_error_sent = models.BooleanField(default=False)
     def get_tv_display_url_with_key(self):
         if self.tv:
             return self.tv.get_display_url_with_key()
         else:
             return ''
         pass
+    
+    def is_socket_connected_live(self):
+        return self.group_channel_name is not None
+    is_socket_connected_live.short_description = 'socket connected'
+    is_socket_connected_live.boolean = True
+    
     def __str__(self):
         return self.name or self.device_id
 
@@ -53,32 +70,69 @@ class PiDevice(models.Model):
         else:
             return ''
 
-    def send_reboot_device(self):
-        url = PI_MONITOR_SERVER_URL + '/command/'
-        data = {'command': 'reboot', 'device_id': self.device_id}
-        r = requests.post(url, data=data)
-        return r
+    def send_reboot(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_reboot_to_channel
+                send_reboot_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
     
-    def send_cec_off(self):
-        url  = PI_MONITOR_SERVER_URL + '/command/'
-        data = {'command': 'hdmi_cec_off', 'device_id': self.device_id}
-        r = requests.post(url, data=data)
-        return r
+    def send_hdmi_cec_off(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_hdmi_cec_off_to_channel
+                send_hdmi_cec_off_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
     
-    def send_cec_on(self):
-        url  = PI_MONITOR_SERVER_URL + '/command/'
-        data = {'command': 'hdmi_cec_on', 'device_id': self.device_id}
-        r = requests.post(url, data=data)
-        return r
+    def send_hdmi_cec_on(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_hdmi_cec_on_to_channel
+                send_hdmi_cec_on_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
     
     def send_relaunch_kiosk_browser(self):
-        url  = PI_MONITOR_SERVER_URL + '/command/'
-        data = {'command': 'relaunch_kiosk_browser', 'device_id': self.device_id}
-        r = requests.post(url, data=data)
-        return r
-    
-    def send_set_tv_url(self):
-        url  = PI_MONITOR_SERVER_URL + '/command/'
-        data = {'command': 'set_tv_url', 'device_id': self.device_id, 'url': self.get_tv_display_url_with_key()}
-        r = requests.post(url, data=data)
-        return r
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_relaunch_kiosk_browser_to_channel
+                send_relaunch_kiosk_browser_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def send_set_tv_url(self, url=None):
+        try:
+            if self.is_socket_connected_live():
+                if not url:
+                    url = self.tv.get_display_url_with_key()
+                channel_name = self.group_channel_name
+                from .consumers import send_set_tv_url_to_channel
+                send_set_tv_url_to_channel(channel_name,url)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False

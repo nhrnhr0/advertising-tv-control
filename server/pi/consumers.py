@@ -15,7 +15,13 @@ from .serializers import PiDeviceSerializer
 
 
 # open_socket_connections = {}
-
+def send_set_tv_url_to_channel(channel_name,url):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(channel_name, {
+        "type": "do_set_tv_url",
+        "url": url,
+    })
+    
 def send_reboot_to_channel(channel_name):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(channel_name, {
@@ -56,6 +62,16 @@ class ChatConsumer(WebsocketConsumer):
         self.pi_device = None
         # the chat room
         self.group_channel_name = None
+        
+    def do_set_tv_url(self, event):
+        url = event.get('url')
+        print('set_tv_url')
+        self.send(text_data=json.dumps({
+            'type': 'command',
+            'command': 'set_tv_url',
+            'url': url
+        }))
+        pass
 
     def do_reboot(self, event):
         print('rebooting')
@@ -98,7 +114,7 @@ class ChatConsumer(WebsocketConsumer):
             tv_device.save()
         # set the value
         self.pi_device = tv_device
-        print(tv_device.id, ' saved')
+        self.pi_device.save()
 
     def connect(self):
         """
@@ -121,8 +137,10 @@ class ChatConsumer(WebsocketConsumer):
                               {'group_channel_name': self.group_channel_name,
                                'socket_status_updated': socket_status_updated,
                                'is_socket_connected': is_socket_connected})
-
-        self.accept()
+        if self.pi_device and self.pi_device.is_approved:
+            self.accept()
+        else:
+            self.disconnect(code=1014)
 
     def receive(self, text_data):
         """

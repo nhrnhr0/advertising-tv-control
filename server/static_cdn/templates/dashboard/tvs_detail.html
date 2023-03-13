@@ -210,7 +210,16 @@
                     פעיל
                 </th>
                 <th>
+                    מאסטר
+                </th>
+                <th>
                     כמות שידורים שנישארו
+                </th>
+                <th>
+                    התראה בטלגרם
+                </th>
+                <th>
+                    היסטוריה
                 </th>
                 <th>
                     פעולות
@@ -224,7 +233,7 @@
                 {% for b_in_tv in broadcasts_in_tv %}
                 <tr>
                     <td>
-                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{b_in_tv.broadcast.id}}">
+                        <input type="hidden" name="existing_broadcasts_ids[]" value="{{b_in_tv.id}}">
                         <input type="hidden" name="existing_broadcasts_in_tvs_ids[]"
                             value="{{b_in_tv.id}}">
                         {{forloop.counter}}
@@ -253,19 +262,190 @@
                         {{b_in_tv.broadcast.publisher.first.name}}
                     </td>
                     <td>
-                        <input type="number" name="broadcast_{{b_in_tv.broadcast.id}}_duration"
+                        <input type="number" step="0.01" name="b_in_tv_{{b_in_tv.id}}_duration"
                             value="{{b_in_tv.duration}}">
                     </td>
                     <td>
-                        <input type="checkbox" name="broadcast_{{b_in_tv.broadcast.id}}_active"
+                        <input type="checkbox" name="b_in_tv_{{b_in_tv.id}}_active"
                             {% if b_in_tv.active %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="b_in_tv_{{b_in_tv.id}}_master"
+                            {% if b_in_tv.master %}checked{% endif %}>
                     </td>
                     <td>
                         {{b_in_tv.plays_left}}
                     </td>
                     <td>
-                        <a href="/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/" target="popup"
-                            onclick="window.open('/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/','popup','width=600,height=600'); return false;">מחק</a>
+                        <!-- telegram_notification_in, telegram_notification_sent -->
+                        {%if not b_in_tv.telegram_notification_sent %}
+                            <img src="{% static 'admin/img/icon-yes.svg' %}" alt="yes" width="10" height="10">
+                            <br>
+                             כשישאר:
+                            {{b_in_tv.telegram_notification_in}}
+                            <br>
+                            בעוד:
+                            {{b_in_tv.plays_left_for_notification}}
+                        {% else %}
+                            <img src="{% static 'admin/img/icon-no.svg' %}" alt="no" width="10" height="10">
+                        {%endif%}
+                       
+                    </td>
+                    <td>
+                        <!-- <ul class="history-list">
+                            {% for history in b_in_tv.broadcast.history %}
+                            <li>
+                                <span class="date">
+                                    <script type="text/javascript">
+                                        var date = "{{history.time}}";
+                                        date = date.replace("Z", "");
+                                        date = new Date(date);
+                                        date = new Intl.DateTimeFormat('he-IL', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                            hour12: false
+                                        }).format(date);
+                                        document.write(date);
+                                    </script>
+                                    )
+                                    {%if history.action == 'add_to_tv' %}
+                                        הוסף לטלוויזיה
+                                    {% elif history.action == 'change_left_plays' %}
+                                        שינוי כמות
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    <b><u>
+                                    {{history.plays}}
+                                    </u></b> תשדירים
+                                </span>
+                                <br>
+                                <span class="note">
+                                    {{history.note}}
+                                </span>
+                            </li>
+                            {% endfor %}
+                        </ul> -->
+                        <button class="history-button" type="button" >
+                            היסטוריה ({{b_in_tv.get_broadcasts_history|length}})
+                        </button>
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        תאריך
+                                    </th>
+                                    <th>
+                                        פעולה
+                                    </th>
+                                    <th>
+                                        כמות לפני
+                                    </th>
+                                    <th>
+                                        כמות שהוספה
+                                    </th>
+                                    <th>
+                                        כמות חדשה
+                                    </th>
+                                    <th>
+                                        מחיר מכירה
+                                    </th>
+                                    <th>
+                                        הערה
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- iterate broadcast history in reverse -->
+                                {% for history in b_in_tv.get_broadcasts_history reversed %}
+                                <tr>
+                                    <td>
+                                        <script type="text/javascript">
+                                            var date = "{{history.time}}";
+                                            date = date.replace("Z", "");
+                                            date = new Date(date);
+                                            date = new Intl.DateTimeFormat('he-IL', {
+                                                year: 'numeric',
+                                                month: 'numeric',
+                                                day: 'numeric',
+                                                hour: 'numeric',
+                                                minute: 'numeric',
+                                                second: 'numeric',
+                                                hour12: false
+                                            }).format(date);
+                                            document.write(date);
+                                        </script>
+                                    </td>
+                                    <td>
+                                        {%if history.action == 'add_to_tv' %}
+                                            הוסף לטלוויזיה
+                                        {% elif history.action == 'change_left_plays' %}
+                                            שינוי כמות
+                                        {% elif history.action == 'delete_from_tv' %}
+                                            מחיקה
+                                        {% endif %}
+                                    </td>
+                                    {%if history.action == 'add_to_tv' %}
+                                        <td>
+                                            -
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                    {% elif history.action == 'change_left_plays' %}
+                                        <td>
+                                            {{history.plays_before}}
+                                        </td>
+                                        <td>
+                                            {%if history.plays_added > 0 %}
+                                                +{{history.plays_added}}
+                                            {% else %}
+                                                {{history.plays_added}}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                    {% elif history.action == 'delete_from_tv' %}
+                                        <td>
+                                            {{history.plays}}
+                                        </td>
+                                        <td>
+                                            -
+                                        </td>
+                                        <td>
+                                            -
+                                        </td>
+                                    {% endif %}
+                                    <td>
+                                        {%if history.price %}
+                                            {{history.price}} ש"ח
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{history.note}}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                    </td>
+                    <td>
+                        <!-- <a href="/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/" target="popup"
+                            onclick="window.open('/admin/tv/broadcastintv/{{b_in_tv.id}}/delete/','popup','width=600,height=600'); return false;">מחק</a> -->
+                            <button type="button" onclick="deleteBroadcastInTV({{b_in_tv.id}})">
+                                מחק
+                            </button>
                         <a href="/admin/tv/broadcastintv/{{b_in_tv.id}}/change/" target="popup"
                             onclick="window.open('/admin/tv/broadcastintv/{{b_in_tv.id}}/change/','popup','width=600,height=600'); return false;">ערוך</a>
                         <button type="button" onclick="changeLeftPlays({{b_in_tv.id}})">
@@ -273,7 +453,7 @@
                         </button>
                     </td>
                     <td>
-                        <input type="number" name="broadcast_{{b_in_tv.broadcast.id}}_order"
+                        <input type="number" name="b_in_tv_{{b_in_tv.id}}_order"
                             value="{{b_in_tv.order}}">
                     </td>
                 </tr>
@@ -346,6 +526,17 @@
         if (plays_count == null || plays_count == "") {
             return;
         }
+        let price = prompt('הכנס מחיר מכירה', '0');
+        if (price == null || price == "") {
+            return;
+        }
+        let note = prompt('הכנס הערה', '');
+        if (note == null) {
+            return;
+        }
+
+
+
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/dashboard/tvs/{{tv.id}}/change_left_plays/', true);
         xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
@@ -355,7 +546,7 @@
                 location.reload();
             }
         };
-        xhr.send('broadcast_in_tv_id=' + broadcast_in_tv_id + '&plays_count=' + plays_count);
+        xhr.send('broadcast_in_tv_id=' + broadcast_in_tv_id + '&plays_count=' + plays_count + '&price=' + price + '&note=' + note);
     }
 
     function addBroadcast(broadcast_id) {
@@ -363,6 +554,15 @@
         if (plays_count == null || plays_count == "") {
             return;
         }
+        let price = prompt('הכנס מחיר מכירה (כולל מע"מ)', '0');
+        if (price == null || price == "") {
+            return;
+        }
+        let note = prompt('הכנס הערה', '');
+        if (note == null) {
+            return;
+        }
+        // let escaped_note = escape(note);
         let xhr = new XMLHttpRequest();
         xhr.open('POST', '/dashboard/tvs/{{tv.id}}/add_broadcast/', true);
         xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
@@ -372,7 +572,7 @@
                 location.reload();
             }
         };
-        xhr.send('broadcast_id=' + broadcast_id + '&plays_count=' + plays_count);
+        xhr.send('broadcast_id=' + broadcast_id + '&plays_count=' + plays_count + '&price=' + price + '&note=' + note);
     }
 
     function addOpeningHour(info=undefined) {
@@ -485,7 +685,7 @@
         }
         let tv_id = "{{tv.id}}";
         page_size = document.querySelector('#page_size').value;
-        getBroadcasts(`/dashboard/publishers/${publisherId}/broadcasts/?not_in_tv=${tv_id}&page_size=${page_size}`);
+        getBroadcasts(`/dashboard/publishers/${publisherId}/broadcasts/?&page_size=${page_size}`);
     }
 
     function pageSizeChanged() {
@@ -505,16 +705,16 @@
                 broadcastsSelect.innerHTML = '';
 
                 // make sure we only display broadcasts that are not already added
-                let existing_broadcasts_ids = [];
-                let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
-                for (var i = 0; i < ids_inputs.length; i++) {
-                    existing_broadcasts_ids.push(ids_inputs[i].value);
-                }
+                // let existing_broadcasts_ids = [];
+                // let ids_inputs = document.getElementsByName('existing_broadcasts_ids[]');
+                // for (var i = 0; i < ids_inputs.length; i++) {
+                //     existing_broadcasts_ids.push(ids_inputs[i].value);
+                // }
                 for (var i = 0; i < broadcasts.length; i++) {
                     // if broadcast is already added, skip it
-                    if (existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
-                        continue;
-                    }
+                    // if (existing_broadcasts_ids.includes(broadcasts[i].id.toString())) {
+                    //     continue;
+                    // }
 
                     let card = `<div class="broadcast-card"><h3>${broadcasts[i].name}</h3>`
                     if (broadcasts[i].media_type == 'video') {
@@ -551,6 +751,28 @@
                     
                 });
 
+    }
+
+    function deleteBroadcastInTV(broadcast_in_tv_id) {
+        // send xhr request to delete broadcast in tv
+        let url = `/dashboard/tvs/{{tv.id}}/delete_broadcast_in_tv/${broadcast_in_tv_id}/`;
+        // prompt user to confirm deletion
+        if (confirm('האם אתה בטוח שברצונך למחוק את השידור?')) {
+            let xhr = new XMLHttpRequest();
+            xhr.open('DELETE', url, true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.onload = function() {
+                if (xhr.status == 200) {
+                    // remove broadcast from list
+                    let broadcastInTV = document.querySelector(`#broadcast_in_tv_${broadcast_in_tv_id}`);
+                    broadcastInTV.remove();
+                } else {
+                    alert('אירעה שגיאה במחיקת השידור');
+                }
+            }
+            xhr.send();
+        }
     }
 
 
@@ -608,8 +830,23 @@
 </script>
 
 <style>
+    .history-button:hover + .history-table,
+    .history-button:active + .history-table {
+        visibility: visible;
+    }
 
-    
+
+    .history-table{
+        position: absolute;
+        transform: translate(50%, 0);
+        background-color: white;
+        visibility: hidden;
+        z-index: 1000;
+    }
+
+    .history-table:hover {
+        visibility: visible;
+    }
 
     form {
         width: 80%;

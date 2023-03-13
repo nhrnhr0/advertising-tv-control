@@ -27,7 +27,8 @@ LOCALE_PATHS = [
 ]
 
 INSTALLED_APPS = [
-    'daphne',
+    "channels",
+    "pi",
     'corsheaders',
     "django.contrib.admin",
     "django.contrib.auth",
@@ -35,15 +36,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    
+    
     # 3rd party apps
     'rest_framework',
-
-    # "daphne",  # for channels
-    'channels',
-    # my apps
+    'celery',
+    'django_celery_beat',
+    'django_celery_results',
     'core',
     'tv',
-    'pi',
+    
 
 
 ]
@@ -80,11 +82,6 @@ TEMPLATES = [
     },
 ]
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
-}
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -126,3 +123,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
 }
+
+
+
+MAX_PLAYLIST_DURATION = 10 * 60

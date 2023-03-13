@@ -3,7 +3,7 @@
 from rest_framework import routers, serializers, viewsets
 from .models import Tv, Broadcast, BroadcastInTv
 from django.db.models import Q
-
+from django.conf import settings
 
 class BroadcastInTvSerializer(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
@@ -21,18 +21,115 @@ class BroadcastSerializer(serializers.ModelSerializer):
         model = Broadcast
         fields = ('id', 'name', 'updated', 'created', 'media','duration')
 
+def fill_with_master_broadcasts(master_broadcasts, ret, remaining_time, i):
+    # knapsack problem to fill the remaining time with master broadcasts, broadcasts can be repeated but not one after the other.
+    # we need to find the best combination of broadcasts that will fill the remaining time.
+    if remaining_time == 0:
+        return ret, remaining_time
+    if master_broadcasts.count() == 0:
+        return ret, remaining_time
+    if i == len(master_broadcasts):
+        return ret, remaining_time
+    broadcast = master_broadcasts[i]
+    rim1 = float('-inf')
+    if broadcast.duration <= remaining_time:
+        ret.append(broadcast)
+        ret1,rim1 = fill_with_master_broadcasts(master_broadcasts, ret, remaining_time - broadcast.duration, i)
+    else:
+        ret2,rim2 = fill_with_master_broadcasts(master_broadcasts, ret, remaining_time, i+1)
+        if rim1 > rim2:
+            ret = ret1
+            remaining_time = rim1
+        else:
+            ret = ret2
+            remaining_time = rim2
+    return ret, remaining_time
+
 
 class TvSerializer(serializers.ModelSerializer):
     
     broadcasts = serializers.SerializerMethodField()
     def get_broadcasts(self, obj):
-        qset = BroadcastInTv.objects.select_related('tv', 'broadcast')
-        qset = qset.filter(tv=obj)
-        qset= qset.filter(active=True)
-        qset = qset.filter(~Q(broadcast__media_type='unknown'))
-        qset = qset.filter(plays_left__gt=0)
-        qset = qset.order_by('order')
-        serializer = BroadcastInTvSerializer(qset, many=True)
+        # old code
+        # qset = BroadcastInTv.objects.select_related('tv', 'broadcast')
+        # qset = qset.filter(tv=obj)
+        # qset= qset.filter(active=True)
+        # qset = qset.filter(~Q(broadcast__media_type='unknown'))
+        # qset = qset.filter(plays_left__gt=0)
+        # qset = qset.order_by('order')
+        
+        # instructions:
+        # we need to return a list of broadcasts of duration 10 minutes.
+        # broadcasts that are not active should not be returned at all.
+        # broadcasts that are active but have no plays left should not be returned as well.
+        # the media type of the broadcast should be known. (~Q(broadcast__media_type='unknown'))
+        # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
+        # then we pick all broadcasts that are active and have plays left and are master broadcasts, those need to appear as many times to fill the 10 minutes.
+
+        # new code:
+        queryset = BroadcastInTv.objects.select_related('tv', 'broadcast')
+        queryset = queryset.filter(tv=obj)
+        queryset = queryset.filter(active=True)
+        queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
+        queryset = queryset.filter(plays_left__gt=0)
+        
+        master_broadcasts = queryset.filter(master=True)
+        publishers_broadcasts = queryset.filter(master=False)
+        
+        # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
+        ret = []
+        total_duration = 0
+        
+        for broadcast in publishers_broadcasts:
+            ret.append(broadcast)
+            total_duration += broadcast.duration
+            if total_duration >= settings.MAX_PLAYLIST_DURATION:
+                break
+        
+        i= 0
+        while total_duration < settings.MAX_PLAYLIST_DURATION:
+            broadcast = master_broadcasts[i % len(master_broadcasts)]
+            if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
+                # we need to checked if there is a that is fitting in the remaining time or smaller.
+                # if there is no broadcast that fits we need to break the loop.
+                # if there is a broadcast that fits we need to add it and break the loop.
+                for broadcast in master_broadcasts:
+                    if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
+                        ret.append(broadcast)
+                        total_duration += broadcast.duration
+                        break
+                
+            ret.append(broadcast)
+            total_duration += broadcast.duration
+            i += 1
+        i=0
+        if total_duration > settings.MAX_PLAYLIST_DURATION:
+            ret.pop()
+            total_duration -= broadcast.duration
+            res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+            if remaining != 0:
+                ret.pop()
+                total_duration -= broadcast.duration
+                res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+            ret = res1
+        # if master_broadcasts.count() != 0:
+        #     while total_duration < settings.MAX_PLAYLIST_DURATION:
+        #         broadcast = master_broadcasts[i % len(master_broadcasts)]
+        #         if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
+        #             # we need to checked if there is a that is fitting in the remaining time or smaller.
+        #             # if there is no broadcast that fits we need to break the loop.
+        #             # if there is a broadcast that fits we need to add it and break the loop.
+        #             for broadcast in master_broadcasts:
+        #                 if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
+        #                     ret.append(broadcast)
+        #                     total_duration += broadcast.duration
+        #                     break
+                    
+        #         # ret.append(broadcast)
+        #         # total_duration += broadcast.duration
+        #         # i += 1
+        
+        serializer = BroadcastInTvSerializer(ret, many=True)
         return serializer.data
     class Meta:
         model = Tv

@@ -1,0 +1,13 @@
+[Unit]
+Description=daphne daemon
+Requires=daphne.socket
+After=network.target
+
+[Service]
+Type=simple
+User=sammy
+WorkingDirectory=/home/ubuntu/advertising-tv-constol
+ExecStart=/home/ubuntu/advertising-tv-constol/env/bin/daphne -b 0.0.0.0 -p 8000 server.asgi:application
+
+[Install]
+WantedBy=multi-user.target

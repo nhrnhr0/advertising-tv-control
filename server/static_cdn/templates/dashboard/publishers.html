@@ -1,14 +1,72 @@
 {% extends "dashboard/base.html" %} 
-
+{% load static %}
 
 {% block content %}
     <!-- show all_publishers as links to their dashboard and option to add new publisher -->
     <h2>מפרסמים</h2>
-    <ul>
-        {% for publisher in all_publishers %}
-            <li><a href="/dashboard/publishers/{{publisher.id}}">{{publisher.name}}</a></li>
-        {% endfor %}
-    </ul>
-    <!-- <a href="/dashboard/publishers/add" >הוסף מפרסם חדש</a> -->
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    שם
+                </th>
+                <th>
+                    כתובת
+                </th>
+                <th>
+                    לוגו
+                </th>
+                <th>
+                    משרד פרסום
+                </th>
+                <th>
+                    יצירת קשר
+                </th>
+                <th>
+                    קבצים
+                </th>
+                <th>
+                    פרסומות פעילות
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for publisher in all_publishers %}
+                <tr>
+                    <td>
+                        <a href="/dashboard/publishers/{{ publisher.id }}">{{ publisher.name }}</a>
+                    </td>
+                    <td>
+                        {{ publisher.address }}
+                    </td>
+                    <td>
+                        {% if publisher.logo %}
+                            <img src="{{ publisher.logo.url }}" alt="publisher logo" width="100" height="100">
+                        {% else %}
+                            <img src="{% static 'imgs/no_image.png' %}" alt="logo" width="100" height="100">
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if publisher.adv_agency %}
+                            <a href="/dashboard/advertising-agency/{{ publisher.adv_agency.id }}">{{ publisher.adv_agency.name }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ publisher.contact_name }}<br>
+                        {{ publisher.contact_phone }}<br>
+                        {{ publisher.email }}
+                    </td>
+                    <td>
+                        {{ publisher.broadcasts.count }}
+                    </td>
+                    <td>
+                        {{ publisher.active_broadcasts.count }}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% include "dashboard/components/new_publisher.html" %}
 {% endblock %}
