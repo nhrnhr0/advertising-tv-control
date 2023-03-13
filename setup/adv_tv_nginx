@@ -2,15 +2,15 @@ upstream channels-backend {server localhost:8000;}
 
 server {
     listen 80;
-    server_name 18.223.66.10 advertising-tv-control.ms-global.co.il;
+    server_name 18.223.66.10 adv-tv-control.ms-global.co.il;
     location = /favicon.ico { access_log off; log_not_found off; }
     location /static/ {
             autoindex on;
-            alias /home/ubuntu/advertising-tv-control/static/;
+            alias /home/ubuntu/advertising-tv-control/server/static/;
     }
     location /media/ {
             autoindex on;
-            alias /home/ubuntu/advertising-tv-control/static/media_root/;
+            alias /home/ubuntu/advertising-tv-control/server/static/media_root/;
     }
     location / {
             proxy_pass http://channels-backend;
