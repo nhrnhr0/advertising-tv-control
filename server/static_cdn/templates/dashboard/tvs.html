@@ -80,31 +80,40 @@
             </td>
             <td>
                 {% if tv.pi %}
-                טלוויזיה:
-                {% if tv.pi.cec_hdmi_status == 'on' %}
-                <img src="{% static 'admin/img/icon-yes.svg' %}" alt="yes" width="10" height="10">
-                פועלת
-                {% else %}
-                <img src="{% static 'admin/img/icon-no.svg' %}" alt="no" width="10" height="10">
-                {{tv.pi.cec_hdmi_status}}
-                {% endif %}
-                <br>
-                עדכן אחרון ב: {{tv.pi.socket_status_updated}}
-                <br>
-                לפני: {{tv.pi.humanize_socket_status_updated_ago}}
-                <br>
-                <a href="/admin/pi/pidevice/?device_id={{tv.pi.device_id}}" target="popup"
-                    onclick="window.open('/admin/pi/pidevice/?device_id={{tv.pi.device_id}}','popup','width=600,height=600'); return false;">לאדמין
-                    הפיי</a>
+                    פיי: 
+                        {% if tv.pi.is_socket_connected_live %}
+                            <img src="{% static 'admin/img/icon-yes.svg' %}" alt="yes" width="10" height="10">
+                            מחובר
+                        {% else %}
+                            <img src="{% static 'admin/img/icon-no.svg' %}" alt="no" width="10" height="10">
+                            לא מחובר
+                        {% endif %}
                     <br>
-                    {% if tv.pi.remote_last_image %}
-                        <img src="{{tv.pi.remote_last_image.url}}" alt="remote" width="100" height="100">
+                    טלוויזיה:
+                    {% if tv.pi.cec_hdmi_status == 'on' %}
+                        <img src="{% static 'admin/img/icon-yes.svg' %}" alt="yes" width="10" height="10">
+                        פועלת
+                    {% else %}
+                        <img src="{% static 'admin/img/icon-no.svg' %}" alt="no" width="10" height="10">
+                        {{tv.pi.cec_hdmi_status}}
+                    {% endif %}
+                    <br>
+                    עדכן אחרון ב: {{tv.pi.socket_status_updated}}
+                    <br>
+                    לפני: {{tv.pi.humanize_socket_status_updated_ago}}
+                    <br>
+                    <a href="/admin/pi/pidevice/?device_id={{tv.pi.device_id}}" target="popup"
+                        onclick="window.open('/admin/pi/pidevice/?device_id={{tv.pi.device_id}}','popup','width=600,height=600'); return false;">לאדמין
+                        הפיי</a>
+                        <br>
+                        {% if tv.pi.remote_last_image %}
+                            <img src="{{tv.pi.remote_last_image.url}}" alt="remote" width="100" height="100">
+                        {%endif%}
+                    <br>
+                    {%if tv.pi.humanize_image_updated_ago%}
+                        תמונה עודכנה לפני: {{tv.pi.humanize_image_updated_ago}}
+                        <br>
                     {%endif%}
-                <br>
-                {%if tv.pi.humanize_image_updated_ago%}
-                    תמונה עודכנה לפני: {{tv.pi.humanize_image_updated_ago}}
-                    <br>
-                {%endif%}
                 {% else %}
                     Pi לא מוגדר
                 {% endif %}

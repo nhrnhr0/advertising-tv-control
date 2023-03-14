@@ -152,6 +152,7 @@ class ChatConsumer(WebsocketConsumer):
 
         # fixme: uncomment this and remove line 14
         raw_image = text_data_json['data'].get('img_str')
+        remote_last_image = None
         if raw_image:
             raw_image = base64.b64decode(raw_image)
             remote_last_image = ImageFile(io.BytesIO(raw_image), 'image.jpg')
@@ -165,24 +166,21 @@ class ChatConsumer(WebsocketConsumer):
             tv_device, created = PiDevice.objects.get_or_create(device_id=self.device_id)
             if tv_device.remote_last_image:
                 tv_device.remote_last_image.delete()
-
-        
-        #  we don't need to await it because we are using WebsocketConsumer not the async
-        self.update_tv_device(self.device_id, {
-            'cec_hdmi_status': cec_hdmi_status,
-            'remote_last_image': remote_last_image,
-            'socket_status_updated': socket_status_updated,
-            'is_socket_connected': is_socket_connected,
-            'group_channel_name': self.group_channel_name
-        })
-
-        # Fixme: You can remove this i added it for testing
-        # send a response to the user about the socket connection
-        # show list of online users
-        # self.send(text_data=json.dumps({
-        #     "type": "connected",
-        #     "data": PiDeviceSerializer(instance=self.pi_device).data,
-        # }))
+            #  we don't need to await it because we are using WebsocketConsumer not the async
+            self.update_tv_device(self.device_id, {
+                'cec_hdmi_status': cec_hdmi_status,
+                'remote_last_image': remote_last_image,
+                'socket_status_updated': socket_status_updated,
+                'is_socket_connected': is_socket_connected,
+                'group_channel_name': self.group_channel_name
+            })
+        else:
+            self.update_tv_device(self.device_id, {
+                'cec_hdmi_status': cec_hdmi_status,
+                'socket_status_updated': socket_status_updated,
+                'is_socket_connected': is_socket_connected,
+                'group_channel_name': self.group_channel_name
+            })
 
     def disconnect(self, code):
         """
