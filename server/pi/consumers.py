@@ -10,7 +10,7 @@ from django.core.files.images import ImageFile
 from django.utils import timezone
 
 from .models import PiDevice
-from .serializers import PiDeviceSerializer
+from .serializers import OpeningHoursSerializer, PiDeviceSerializer
 
 
 
@@ -181,6 +181,22 @@ class ChatConsumer(WebsocketConsumer):
                 'is_socket_connected': is_socket_connected,
                 'group_channel_name': self.group_channel_name
             })
+            
+        # send the opening hours of the TV and if it's open or not
+        if self.pi_device and self.pi_device.is_approved:
+            try:
+                tv = self.pi_device.tv
+                opening_hours_qs = tv.opening_hours.all()
+                opening_hours = OpeningHoursSerializer(opening_hours_qs, many=True).data
+                manual_turn_off = tv.manual_turn_off
+                self.send(text_data=json.dumps({
+                        'type': 'opening_hours',
+                        'opening_hours': opening_hours,
+                        'manual_turn_off': manual_turn_off
+                    }))
+            except:
+                print('proberly the tv is not set for this device')
+                pass
 
     def disconnect(self, code):
         """

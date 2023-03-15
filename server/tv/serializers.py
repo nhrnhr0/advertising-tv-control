@@ -87,47 +87,32 @@ class TvSerializer(serializers.ModelSerializer):
                 break
         
         i= 0
-        while total_duration < settings.MAX_PLAYLIST_DURATION:
-            broadcast = master_broadcasts[i % len(master_broadcasts)]
-            if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
-                # we need to checked if there is a that is fitting in the remaining time or smaller.
-                # if there is no broadcast that fits we need to break the loop.
-                # if there is a broadcast that fits we need to add it and break the loop.
-                for broadcast in master_broadcasts:
-                    if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
-                        ret.append(broadcast)
-                        total_duration += broadcast.duration
-                        break
-                
-            ret.append(broadcast)
-            total_duration += broadcast.duration
-            i += 1
-        i=0
-        if total_duration > settings.MAX_PLAYLIST_DURATION:
-            ret.pop()
-            total_duration -= broadcast.duration
-            res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-            if remaining != 0:
+        if len(master_broadcasts) != 0:
+            while total_duration < settings.MAX_PLAYLIST_DURATION:
+                broadcast = master_broadcasts[i % len(master_broadcasts)]
+                if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
+                    # we need to checked if there is a that is fitting in the remaining time or smaller.
+                    # if there is no broadcast that fits we need to break the loop.
+                    # if there is a broadcast that fits we need to add it and break the loop.
+                    for broadcast in master_broadcasts:
+                        if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
+                            ret.append(broadcast)
+                            total_duration += broadcast.duration
+                            break
+                    
+                ret.append(broadcast)
+                total_duration += broadcast.duration
+                i += 1
+            i=0
+            if total_duration > settings.MAX_PLAYLIST_DURATION:
                 ret.pop()
                 total_duration -= broadcast.duration
                 res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-            ret = res1
-        # if master_broadcasts.count() != 0:
-        #     while total_duration < settings.MAX_PLAYLIST_DURATION:
-        #         broadcast = master_broadcasts[i % len(master_broadcasts)]
-        #         if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
-        #             # we need to checked if there is a that is fitting in the remaining time or smaller.
-        #             # if there is no broadcast that fits we need to break the loop.
-        #             # if there is a broadcast that fits we need to add it and break the loop.
-        #             for broadcast in master_broadcasts:
-        #                 if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
-        #                     ret.append(broadcast)
-        #                     total_duration += broadcast.duration
-        #                     break
-                    
-        #         # ret.append(broadcast)
-        #         # total_duration += broadcast.duration
-        #         # i += 1
+                if remaining != 0:
+                    ret.pop()
+                    total_duration -= broadcast.duration
+                    res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+                ret = res1
         
         serializer = BroadcastInTvSerializer(ret, many=True)
         return serializer.data
