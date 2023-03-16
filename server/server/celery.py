@@ -3,13 +3,14 @@ from server.settings.secrects import DJANGO_SETTINGS_MODULE, BROKER_USER, BROKER
 import os
 from celery.schedules import crontab
 from celery import Celery
+from django.conf import settings
 #BASE_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', DJANGO_SETTINGS_MODULE)
 # save Celery task results in Django's database
 CELERY_RESULT_BACKEND = "django-db"
 
-app = Celery('server', broker='amqp://'+BROKER_USER + ':' + BROKER_PASSWORD + '@localhost//')
+app = Celery('server', broker=settings.CELERY_BROKER_URL)
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 #from celery.schedules import crontab
