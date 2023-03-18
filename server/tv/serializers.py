@@ -14,7 +14,7 @@ class BroadcastInTvSerializer(serializers.ModelSerializer):
     # serializers.CharField(source='broadcast.media', read_only=True)
     class Meta:
         model = BroadcastInTv
-        fields = ('broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','duration', 'order', 'updated', 'created',)
+        fields = ('broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','duration', 'order', 'updated', 'created','master')
         
 class BroadcastSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,6 +47,25 @@ def fill_with_master_broadcasts(master_broadcasts, ret, remaining_time, i):
 
 
 class TvSerializer(serializers.ModelSerializer):
+    def merge_masters_and_publishers(publishers, masters):
+        # we have a list of publishers and masters broadcasts, the 2 together should be 10 minutes.
+        # we need to put the publishers equaly spaced in the 10 minutes (in the masters broadcasts).
+        
+        # first we need to devide the length of the masters broadcasts to the length of the publishers broadcasts.
+        # this will give us the number of masters broadcasts that we need to put between each publisher broadcast.
+        # we need to put the masters broadcasts in the middle of the publishers broadcasts.
+        num_of_masters = len(masters) // len(publishers) 
+        #  // is the integer division operator. (5//2 = 2)
+
+        ret = []
+        i = 0
+        for publisher in publishers:
+            ret.append(publisher)
+            for j in range(num_of_masters):
+                ret.append(masters[i])
+                i += 1
+        return ret
+        
     
     broadcasts = serializers.SerializerMethodField()
     def get_broadcasts(self, obj):
@@ -69,19 +88,25 @@ class TvSerializer(serializers.ModelSerializer):
         # new code:
         queryset = BroadcastInTv.objects.select_related('tv', 'broadcast')
         queryset = queryset.filter(tv=obj)
-        queryset = queryset.filter(active=True)
+        include_inactive = self.context.get("include_inactive", False)
+        # if we need to show also hidden broadcasts, it's only demo to check the assests.
+        if not include_inactive:
+            queryset = queryset.filter(active=True)
+            queryset = queryset.filter(plays_left__gt=0)
         queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
-        queryset = queryset.filter(plays_left__gt=0)
         
         master_broadcasts = queryset.filter(master=True)
         publishers_broadcasts = queryset.filter(master=False)
         
         # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
         ret = []
+        ret_publishers_broadcasts = []
+        ret_masters_broadcasts = []
         total_duration = 0
         
         for broadcast in publishers_broadcasts:
-            ret.append(broadcast)
+            # ret.append(broadcast)
+            ret_publishers_broadcasts.append(broadcast)
             total_duration += broadcast.duration
             if total_duration >= settings.MAX_PLAYLIST_DURATION:
                 break
@@ -96,25 +121,29 @@ class TvSerializer(serializers.ModelSerializer):
                     # if there is a broadcast that fits we need to add it and break the loop.
                     for broadcast in master_broadcasts:
                         if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
-                            ret.append(broadcast)
+                            ret_masters_broadcasts.append(broadcast)
                             total_duration += broadcast.duration
                             break
                     
-                ret.append(broadcast)
+                ret_masters_broadcasts.append(broadcast)
                 total_duration += broadcast.duration
                 i += 1
             i=0
             if total_duration > settings.MAX_PLAYLIST_DURATION:
-                ret.pop()
+                ret_masters_broadcasts.pop()
                 total_duration -= broadcast.duration
-                res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+                res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
                 if remaining != 0:
-                    ret.pop()
+                    ret_masters_broadcasts.pop()
                     total_duration -= broadcast.duration
-                    res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-                ret = res1
+                    res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+                ret_masters_broadcasts = res1
         
-        serializer = BroadcastInTvSerializer(ret, many=True)
+        
+        merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
+
+
+        serializer = BroadcastInTvSerializer(merge_broadcasts, many=True)
         return serializer.data
     class Meta:
         model = Tv

@@ -179,6 +179,28 @@
 
     <!-- broadcasts -->
     <h3>שידורים</h3>
+    <a href="{{tv.get_tv_display_demo_url}}" target="popup"
+        onclick="window.open('{{tv.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
+        דף דמו (ללא שעות פתיחה וספירות)
+    </a>
+    <br>
+    <a href="{{tv.get_tv_display_demo_url_with_inactive}}" target="popup"
+        onclick="window.open('{{tv.get_tv_display_demo_url_with_inactive}}','popup','width=600,height=600'); return false;">
+        דף דמו (ללא שעות פתיחה, ספירות כולל לא פעילים)
+    </a>
+    <br>
+    <div class="current-playlist">
+        <div class="current-broadcast-info" id="current-broadcast-info"></div>
+        <table id="current-playlist-table">
+
+        </table>
+
+        </table>
+        
+    </div>
+    
+
+    </div>
     <div id="broadcasts">
         <!--
                 broadcast fields:  
@@ -774,6 +796,107 @@
             xhr.send();
         }
     }
+    function createTableHeaderForPlaylist() {
+        // img, name, type, duration
+        let tr = document.createElement('tr');
+        let th = document.createElement('th');
+        th.innerHTML = '#';
+        tr.appendChild(th);
+        th = document.createElement('th');
+        th.innerHTML = 'תמונה';
+        tr.appendChild(th);
+        th = document.createElement('th');
+        th.innerHTML = 'שם';
+        tr.appendChild(th);
+        th = document.createElement('th');
+        th.innerHTML = 'סוג';
+        tr.appendChild(th);
+        th = document.createElement('th');
+        th.innerHTML = 'משך';
+        tr.appendChild(th);
+        th = document.createElement('th');
+        
+        return tr;
+    }
+
+    function createRowForBroadcastInTV(i, broadcast) {
+        // broadcast: 8broadcast__media: "/media/broadcasts/WhatsApp_Image_2023-02-20_at_13.29.55.jpeg"broadcast__media_type: "image"broadcast__name: "WhatsApp Image 2023-02-20 at 13.29.55.jpeg"created: "2023-02-21T18:33:40.991595+02:00"duration: 10order: 10updated: "2023-03-18T21:08:46.371628+02:00"
+        let tr = document.createElement('tr');
+        tr.id = `broadcast_in_playlist_id_${broadcast.broadcast}`;
+        if (broadcast.master) {
+            tr.classList.add('master');
+        }
+        let td = document.createElement('td');
+        td.innerHTML = i;
+        tr.appendChild(td);
+        td = document.createElement('td');
+        if (broadcast.broadcast__media_type == 'video') {
+            td.innerHTML = `<div class="videoWrapper">
+            <video src="${broadcast.broadcast__media}" muted loop onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;class="img"
+                ></video>
+                </div>`
+        } else {
+            td.innerHTML = `<div class="imageWrapper">
+            <img src="${broadcast.broadcast__media}" class="img"/>
+            </div>`
+        }
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.innerHTML = broadcast.broadcast__name;
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.innerHTML = broadcast.broadcast__media_type;
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.innerHTML = broadcast.duration;
+        
+        tr.appendChild(td);
+        return tr;
+    }
+
+    function init_current_playlist_table_from_api(tv_id) {
+        // /tv/api/{{tv.id}}/
+        debugger;;
+        let url = `/tv/api/${tv_id}/`;
+        fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            debugger;;
+            let broadcasts = data.broadcasts;
+            let total_broadcasts = broadcasts.length;
+            let total_duration = 0;
+            let total_master_broadcasts = 0;
+            let table = document.querySelector('#current-playlist-table');
+            table.innerHTML = '';
+            let thead = document.createElement('thead');
+            thead.appendChild(createTableHeaderForPlaylist());
+            table.appendChild(thead);
+            let tbody = document.createElement('tbody');
+            for (var i = 0; i < broadcasts.length; i++) {
+                
+                tbody.appendChild(createRowForBroadcastInTV(i+1,broadcasts[i]));
+                total_duration += broadcasts[i].duration;
+                if (broadcasts[i].master) {
+                    total_master_broadcasts += 1;
+                }
+
+            }
+            table.appendChild(tbody);
+
+            // set current-broadcast-info
+            let currentBroadcastInfo = document.querySelector('#current-broadcast-info');
+            currentBroadcastInfo.innerHTML = `
+                            לוח השידורים הנוכחי לטלוויזיה:
+                            <br>
+            סה"כ: ${total_broadcasts} שידורים
+                            <br>
+                                            סה"כ משך: ${total_duration} שניות
+                            <br>
+                                            סה"כ שידורים ראשיים: ${total_master_broadcasts}
+                            <br>
+                                            סה"כ שידורים של מפרסמים: ${total_broadcasts - total_master_broadcasts}`;
+        });
+    }
 
 
 
@@ -792,7 +915,7 @@
         });
 
 
-        
+        init_current_playlist_table_from_api({{tv.id}});
 
         
     }
@@ -830,6 +953,22 @@
 </script>
 
 <style>
+    #current-broadcast-info  {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    #current-playlist-table {
+            height: 300px;
+    display: block;
+    overflow: scroll;
+    margin-bottom: 40px;
+    margin-bottom: 40px;
+    width: fit-content;
+    
+    }
+    #current-playlist-table .master {
+        background-color: #e6e6e6;
+    }
     .history-button:hover + .history-table,
     .history-button:active + .history-table {
         visibility: visible;
