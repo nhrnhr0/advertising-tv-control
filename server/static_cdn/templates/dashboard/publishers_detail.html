@@ -2,17 +2,53 @@
 {% load l10n %}
 
 {% block headcontent %}
-    <!-- 
+<!-- 
         https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.js
         https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.css
         https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js
         https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css
     -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css">
-{% endblock %}	
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2.rc.2/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css">
+
+<style>
+    .history-button:hover+.history-table,
+    .history-button:active+.history-table {
+        visibility: visible;
+    }
+
+
+    .history-table {
+        position: absolute;
+        transform: translate(50%, 0);
+        background-color: white;
+        visibility: hidden;
+        z-index: 1000;
+    }
+
+    .history-table:hover {
+        visibility: visible;
+    }
+
+
+
+    .map-container {
+        position: relative;
+        width: 100%;
+        height: 550px;
+        max-width: 50vw;
+        margin: 0 calc(100% - 50vw - 50px);
+        position: absolute;
+        top: 200px;
+    }
+
+    #map {
+        height: 550px;
+    }
+</style>
+{% endblock %}
 
 
 {% block content %}
@@ -22,42 +58,45 @@
     {% csrf_token %}
     <h2>פרטי המפרסם</h2>
     <div class="map-container">
-    <label for="hidden-maps-inputs">אזור עבודה</label>
-    <div id="map"></div>
-    <input type="hidden" id="hidden-maps-inputs" name="geojson" value="{{publisher.geojson}}">
-</div>
+        <label for="hidden-maps-inputs">אזור עבודה</label>
+        <div id="map"></div>
+        <input type="hidden" id="hidden-maps-inputs" name="geojson" value="{{publisher.geojson}}">
+    </div>
     <label for="name">שם המפרסם</label>
     <input type="text" name="name" id="name" value="{{publisher.name}}">
     <br>
     <label for="about">אודות</label>
     <textarea name="about" id="about" cols="30" rows="10">{{publisher.about}}</textarea>
     <br>
-    
+
 
     <label for="publishersType">
         סוגי מפרסם
     </label>
     <select name="publishersType" id="publishersTypeSelect" multiple>
         {% for publisher_type in publishers_types %}
-            <option value="{{publisher_type.id}}" {% if publisher_type in publisher.publishers_types.all %}selected{% endif %}>{{publisher_type.name}}</option>
+        <option value="{{publisher_type.id}}"
+            {% if publisher_type in publisher.publishers_types.all %}selected{% endif %}>{{publisher_type.name}}
+        </option>
         {% endfor %}
     </select>
     <a href="/admin/core/publishertype/add/" target="popup"
-        onclick="window.open('/admin/core/publishertype/add/?_to_field=id&','popup','width=600,height=600'); return false;">הוסף סוג מפרסם</a>
+        onclick="window.open('/admin/core/publishertype/add/?_to_field=id&','popup','width=600,height=600'); return false;">הוסף
+        סוג מפרסם</a>
 
 
-        <div>
-            <label for="logo">לוגו העסק
-            </label>
-            {% if publisher.logo %}
-                <img src="{{publisher.logo.url}}" alt="logo" width="100px" height="100px">
-            {% endif %}
-            <input class="input-field" type="file" name="logo" id="logo" accept="image/*">
-            
-        </div>
-        
+    <div>
+        <label for="logo">לוגו העסק
+        </label>
+        {% if publisher.logo %}
+        <img src="{{publisher.logo.url}}" alt="logo" width="100px" height="100px">
+        {% endif %}
+        <input class="input-field" type="file" name="logo" id="logo" accept="image/*">
 
-<!--
+    </div>
+
+
+    <!--
     כתובת 
     טלפון
     אימייל
@@ -70,19 +109,19 @@
 
     <label for="address">כתובת</label>
     <input type="text" name="address" id="address" value="{{publisher.address}}">
-<br>
+    <br>
     <label for="phone">טלפון</label>
     <input type="text" name="phone" id="phone" value="{{publisher.phone}}">
-<br>
+    <br>
     <label for="email">אימייל</label>
     <input type="email" name="email" id="email" value="{{publisher.email}}">
-<br>
+    <br>
     <label for="contact_name">שם איש קשר</label>
     <input type="text" name="contact_name" id="contact_name" value="{{publisher.contact_name}}">
-<br>
+    <br>
     <label for="contact_phone">טלפון איש קשר</label>
     <input type="text" name="contact_phone" id="contact_phone" value="{{publisher.contact_phone}}">
-<br>
+    <br>
     <label for="qr_link">קישור ברירת מחדל לQR של המפרסם</label>
     <input type="text" name="qr_link" id="qr_link" value="{{publisher.qr_link}}">
 
@@ -91,10 +130,11 @@
     <select name="adv_agency" id="adv_agency" autocomplete="on">
         <option value="" {% if not publisher.adv_agency %}selected{% endif %}>בחר משרד פרסום</option>
         {% for adv_agency in adv_agencies %}
-            <option value="{{adv_agency.id}}" {% if adv_agency == publisher.adv_agency %}selected{% endif %}>{{adv_agency.name}}</option>
+        <option value="{{adv_agency.id}}" {% if adv_agency == publisher.adv_agency %}selected{% endif %}>
+            {{adv_agency.name}}</option>
         {% endfor %}
     </select>
-<br>
+    <br>
 
     <input type="submit" value="שמור">
 </form>
@@ -146,130 +186,137 @@
             <td>{{broadcast.media_type}}</td>
 
             <td>
+                <a href="{{broadcast.get_tv_display_demo_url}}" target="popup"
+                    onclick="window.open('{{broadcast.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
+                    דף דמו
+                </a>
+                <br>
                 <a href="/admin/tv/broadcast/{{broadcast.id}}/change/" target="popup"
                     onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/change/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">ערוך</a>
+                <br>
                 <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/" target="popup"
                     onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a>
+
             </td>
             <td>
                 <ul>
-                {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
-                <li>
-                <span>
-                    <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
-                        {{broad_in_tv.tv}}
-                    </a>
-                </span>
-                {% empty %}
-                <span>לא פעיל בשום טלוויזיה</span>
-                </li>
-                {% endfor %}
-                
+                    {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
+                    <li>
+                        <span>
+                            <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
+                                {{broad_in_tv.tv}}
+                            </a>
+                        </span>
+                        {% empty %}
+                        <span>לא פעיל בשום טלוויזיה</span>
+                    </li>
+                    {% endfor %}
+
                 </ul>
             </td>
             <td>
-                <button class="history-button" type="button" >
+                <button class="history-button" type="button">
                     היסטוריה ({{broadcast.history|length}})
                 </button>
                 <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        תאריך
-                                    </th>
-                                    <th>
-                                        טלוויזיה
-                                    </th>
-                                    <th>
-                                        פעולה
-                                    </th>
-                                    <th>
-                                        כמות לפני
-                                    </th>
-                                    <th>
-                                        כמות שהוספה
-                                    </th>
-                                    <th>
-                                        כמות חדשה
-                                    </th>
-                                    <th>
-                                        מחיר מכירה
-                                    </th>
-                                    <th>
-                                        הערה
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- iterate broadcast history in reverse -->
-                                {% for history in broadcast.history reversed %}
-                                <tr>
-                                    <td>
-                                        <script type="text/javascript">
-                                            var date = "{{history.time}}";
-                                            date = date.replace("Z", "");
-                                            date = new Date(date);
-                                            date = new Intl.DateTimeFormat('he-IL', {
-                                                year: 'numeric',
-                                                month: 'numeric',
-                                                day: 'numeric',
-                                                hour: 'numeric',
-                                                minute: 'numeric',
-                                                second: 'numeric',
-                                                hour12: false
-                                            }).format(date);
-                                            document.write(date);
-                                        </script>
-                                    </td>
-                                    <td>
-                                        {{history.tv_name}}
-                                    </td>
-                                    <td>
-                                        {%if history.action == 'add_to_tv' %}
-                                            הוסף לטלוויזיה
-                                        {% elif history.action == 'change_left_plays' %}
-                                            שינוי כמות
-                                        {% endif %}
-                                    </td>
-                                    {%if history.action == 'add_to_tv' %}
-                                        <td>
-                                            -
-                                        </td>
-                                        <td>
-                                            {{history.plays}}
-                                        </td>
-                                        <td>
-                                            {{history.plays}}
-                                        </td>
-                                    {% elif history.action == 'change_left_plays' %}
-                                        <td>
-                                            {{history.plays_before}}
-                                        </td>
-                                        <td>
-                                            {%if history.plays_added > 0 %}
-                                                +{{history.plays_added}}
-                                            {% else %}
-                                                {{history.plays_added}}
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {{history.plays}}
-                                        </td>
-                                    {% endif %}
-                                    <td>
-                                        {%if history.price %}
-                                            {{history.price}} ש"ח
-                                        {% else %}
-                                            -
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {{history.note}}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <thead>
+                        <tr>
+                            <th>
+                                תאריך
+                            </th>
+                            <th>
+                                טלוויזיה
+                            </th>
+                            <th>
+                                פעולה
+                            </th>
+                            <th>
+                                כמות לפני
+                            </th>
+                            <th>
+                                כמות שהוספה
+                            </th>
+                            <th>
+                                כמות חדשה
+                            </th>
+                            <th>
+                                מחיר מכירה
+                            </th>
+                            <th>
+                                הערה
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- iterate broadcast history in reverse -->
+                        {% for history in broadcast.history reversed %}
+                        <tr>
+                            <td>
+                                <script type="text/javascript">
+                                    var date = "{{history.time}}";
+                                    date = date.replace("Z", "");
+                                    date = new Date(date);
+                                    date = new Intl.DateTimeFormat('he-IL', {
+                                        year: 'numeric',
+                                        month: 'numeric',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        second: 'numeric',
+                                        hour12: false
+                                    }).format(date);
+                                    document.write(date);
+                                </script>
+                            </td>
+                            <td>
+                                {{history.tv_name}}
+                            </td>
+                            <td>
+                                {%if history.action == 'add_to_tv' %}
+                                הוסף לטלוויזיה
+                                {% elif history.action == 'change_left_plays' %}
+                                שינוי כמות
+                                {% endif %}
+                            </td>
+                            {%if history.action == 'add_to_tv' %}
+                            <td>
+                                -
+                            </td>
+                            <td>
+                                {{history.plays}}
+                            </td>
+                            <td>
+                                {{history.plays}}
+                            </td>
+                            {% elif history.action == 'change_left_plays' %}
+                            <td>
+                                {{history.plays_before}}
+                            </td>
+                            <td>
+                                {%if history.plays_added > 0 %}
+                                +{{history.plays_added}}
+                                {% else %}
+                                {{history.plays_added}}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{history.plays}}
+                            </td>
+                            {% endif %}
+                            <td>
+                                {%if history.price %}
+                                {{history.price}} ש"ח
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{history.note}}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
             </td>
         </tr>
@@ -277,38 +324,18 @@
     </tbody>
 </table>
 
-<!-- <a href="/dashboard/publishers/{{publisher.id}}/broadcasts/add">הוסף שידור חדש</a> -->
-<style>
 
-
-.map-container {
-    position: relative;
-    width: 100%;
-    height: 550px;
-    max-width: 50vw;
-    margin: 0 calc(100% - 50vw - 50px);
-    position: absolute;
-    top:200px;
-}
-#map {
-  height: 550px;
-}
-
-    
-
-</style>
 
 <script type="text/javascript">
-    
-    function initMap(){
+    function initMap() {
         let originalPolygon = `{{publisher.geojson|safe}}`;
         if (originalPolygon && originalPolygon != "None" && originalPolygon != "{}") {
             originalPolygon = JSON.parse(originalPolygon);
-        }else {
+        } else {
             originalPolygon = null;
         }
-            
-        
+
+
 
         var center = [31.37857870948204, 34.69895372415273];
 
@@ -317,10 +344,10 @@
 
         // Set up the OSM layer
         L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
-            // maxZoom: 12,
-        }).addTo(map);
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: 'Data © <a href="http://osm.org/copyright">OpenStreetMap</a>',
+                // maxZoom: 12,
+            }).addTo(map);
 
 
         // add the polygon to the map if it exists
@@ -336,28 +363,28 @@
         map.addLayer(editableLayers);
 
         var drawPluginOptions = {
-        position: 'topright',
-        draw: {
-            polygon: {
-            // allowIntersection: false, // Restricts shapes to simple polygons
-            drawError: {
-                color: '#e1e100', // Color the shape will turn when intersects
-                message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+            position: 'topright',
+            draw: {
+                polygon: {
+                    // allowIntersection: false, // Restricts shapes to simple polygons
+                    drawError: {
+                        color: '#e1e100', // Color the shape will turn when intersects
+                        message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                    },
+                    shapeOptions: {
+                        color: '#97009c'
+                    }
+                },
+                // disable toolbar item by setting it to false
+                polyline: false,
+                circle: false, // Turns off this drawing tool
+                rectangle: false,
+                marker: false,
             },
-            shapeOptions: {
-                color: '#97009c'
+            edit: {
+                featureGroup: editableLayers, //REQUIRED!!
+                remove: false
             }
-            },
-            // disable toolbar item by setting it to false
-            polyline: false,
-            circle: false, // Turns off this drawing tool
-            rectangle: false,
-            marker: false,
-            },
-        edit: {
-            featureGroup: editableLayers, //REQUIRED!!
-            remove: false
-        }
         };
 
         // Initialise the draw control and pass it the FeatureGroup of editable layers
@@ -367,24 +394,24 @@
         var editableLayers = new L.FeatureGroup();
         map.addLayer(editableLayers);
 
-        map.on('draw:created', function(e) {
-        var type = e.layerType,
-            layer = e.layer;
+        map.on('draw:created', function (e) {
+            var type = e.layerType,
+                layer = e.layer;
 
-        if (type === 'polygon') {
-            // Do marker specific actions
-            let val = JSON.stringify(layer.toGeoJSON())
-            console.log(val);
-            // create a hidden input with the geojson
-            document.getElementById('hidden-maps-inputs').value=val;
-        }
-        // remove the previous layer
-        editableLayers.clearLayers();
+            if (type === 'polygon') {
+                // Do marker specific actions
+                let val = JSON.stringify(layer.toGeoJSON())
+                console.log(val);
+                // create a hidden input with the geojson
+                document.getElementById('hidden-maps-inputs').value = val;
+            }
+            // remove the previous layer
+            editableLayers.clearLayers();
 
-        editableLayers.addLayer(layer);
+            editableLayers.addLayer(layer);
         });
     }
-    
+
     function initAutoComplete() {
         selectBoxTest = new vanillaSelectBox("#publishersTypeSelect", {
             "maxHeight": 200,
@@ -404,24 +431,4 @@
     initAutoComplete();
 </script>
 
-<style>
-    
-    .history-button:hover + .history-table,
-    .history-button:active + .history-table {
-        visibility: visible;
-    }
-
-
-    .history-table{
-        position: absolute;
-        transform: translate(50%, 0);
-        background-color: white;
-        visibility: hidden;
-        z-index: 1000;
-    }
-    .history-table:hover {
-        visibility: visible;
-    }
-
-</style>
 {% endblock %}

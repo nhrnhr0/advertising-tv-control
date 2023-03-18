@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from tv.views import get_publisher_assets_as_tv_demo
 from tv.views import save_broadcasts_played
 from django.contrib.auth import views as auth_views
 from core.views import pi_screenshot_view,telegram_webhook_view
@@ -32,6 +33,7 @@ urlpatterns = [
     path('dashboard/', include('dashboard.urls')),
     path('pi_screenshot/<str:pi_key>/', pi_screenshot_view, name='pi_screenshot'),
     path('telegram-webhook/', telegram_webhook_view, name='telegram_webhook'),
+    path('api/get-publisher-assets-as-tv-demo/<int:id>/', get_publisher_assets_as_tv_demo, name='get_publisher_assets_as_tv_demo'),
 ]
 
 

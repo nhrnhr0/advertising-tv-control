@@ -40,7 +40,9 @@ class Broadcast(models.Model):
                 self.media_type = 'unknown'
         return super().save(*args, **kwargs)
 
-
+    def get_tv_display_demo_url(self):
+        # http://localhost:5173/publisher/broadcast/27/demo
+        return f'{FRONTEND_BASE_URL}/publisher/broadcast/{self.id}/demo'
 
 
 class BroadcastInTv(models.Model):
@@ -143,6 +145,12 @@ class Tv(models.Model):
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
     # so also keep log, and track of the user's device info
     # pings_log = models.ManyToManyField('PingLog', related_name='pings_log', blank=True)
+    def get_tv_display_demo_url(self):
+        # localhost:5173/tv-display/1/demo?inactive=true
+        return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo"
+    def get_tv_display_demo_url_with_inactive(self):
+        return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo?inactive=true"
+    
     def get_absolute_url(self):
         return f"/tv/{self.id}"
     def __str__(self):
