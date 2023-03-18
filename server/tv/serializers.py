@@ -54,6 +54,8 @@ class TvSerializer(serializers.ModelSerializer):
         # first we need to devide the length of the masters broadcasts to the length of the publishers broadcasts.
         # this will give us the number of masters broadcasts that we need to put between each publisher broadcast.
         # we need to put the masters broadcasts in the middle of the publishers broadcasts.
+        if len(publishers) == 0:
+            return masters
         num_of_masters = len(masters) // len(publishers) 
         #  // is the integer division operator. (5//2 = 2)
 
