@@ -19,12 +19,19 @@ def monitor_pi_devices():
             if (pi_device.socket_status_updated < timezone.now() - timedelta(seconds=ALERT_THRESHOLD)) and not pi_device.telegram_connection_error_sent:
                 
                 # send alert
-                str_time = pi_device.socket_status_updated.strftime("%m/%d/%Y, %H:%M:%S")
-                send_admin_message(f'🛑🛑🛑לא קיבלתי שום תקשורת מהמכשיר <b><a href="{BASE_MY_DOMAIN}{pi_device.tv.get_dashboard_url()}">{pi_device.name}</a></b> ברבע שעה האחרונה\nעדכון אחרון שקיבלתי: <b>{str_time}</b>')
-                print('='*20 + 'send alert')
-                pi_device.telegram_connection_error_sent = True
-                pi_device.save()
-                pass
+                href = BASE_MY_DOMAIN
+                try:
+                    if pi_device.tv:
+                        href += pi_device.tv.get_dashboard_url()
+                        str_time = pi_device.socket_status_updated.strftime("%m/%d/%Y, %H:%M:%S")
+                        send_admin_message(f'🛑🛑🛑לא קיבלתי שום תקשורת מהמכשיר <b><a href="{href}">{pi_device.name}</a></b> ברבע שעה האחרונה\nעדכון אחרון שקיבלתי: <b>{str_time}</b>')
+                        print('='*20 + 'send alert')
+                        pi_device.telegram_connection_error_sent = True
+                        pi_device.save()
+                        pass
+                except:
+                    pass
+                
     # 
 # device_id
 # name

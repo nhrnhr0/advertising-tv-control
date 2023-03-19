@@ -12,6 +12,7 @@ from core.models import Publisher, PublisherType
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
+import json
 
 def main_dashboard_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -354,9 +355,11 @@ def tvs_detail_edit(request, id):
             tv.contact_name = contact_name
         if contact_phone:
             tv.contact_phone = contact_phone
-        
-
-        
+        if request.POST.get('geojson-input') and request.POST.get('geojson-input') != 'None':
+            try:
+                tv.location = json.loads(request.POST.get('geojson-input'))
+            except:
+                pass
 
         new_what_not_to_show = request.POST.get('not_to_show_list',None)
         new_what_to_show = request.POST.get('yes_to_show_list',None)
