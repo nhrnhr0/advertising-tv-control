@@ -142,6 +142,9 @@ class Tv(models.Model):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
+    
+    def get_location_json(self):
+        return self.location or {}
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
     # so also keep log, and track of the user's device info
     # pings_log = models.ManyToManyField('PingLog', related_name='pings_log', blank=True)
