@@ -151,6 +151,18 @@ def dashboard_publishers_detail_add_broadcast(request, id):
     return render(request, 'dashboard/publishers_detail_add_broadcast.html', context)
 
 
+def dashboard_publishers_delete_broadcast(request):
+    # make sure its post and admin
+    if not request.user.is_authenticated or not request.user.is_superuser:
+        return redirect('/admin/login/?next=' + request.path)
+    if request.method == 'POST':
+        broadcast_id = request.POST.get('delete_broadcast_id')
+        broadcast = Broadcast.objects.get(id=broadcast_id)
+        broadcast.deleted = True
+        broadcast.broadcast_in_tv.all().delete()
+        broadcast.save()
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'error'})
 
 
 # def dashboard_publishers_broadcasts_api(request, id):
@@ -175,10 +187,10 @@ class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
         if not self.request.user.is_authenticated or not self.request.user.is_superuser:
             return redirect('login', next=self.request.path)
         if self.kwargs['id'] == 'all':
-            broadcasts = Broadcast.objects.all()
+            broadcasts = Broadcast.objects.filter(deleted=False)
         else:
             publisher = Publisher.objects.get(id=int(self.kwargs['id']))
-            broadcasts = publisher.broadcasts.all()
+            broadcasts = publisher.broadcasts.filter(deleted=False)
             
         if self.request.query_params.get('not_in_tv'):
             from tv.models import Tv
@@ -199,7 +211,7 @@ def dashboard_tvs_view(request):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
-    all_tvs = Tv.objects.all()
+    all_tvs = Tv.objects.all().prefetch_related('broadcasts','opening_hours','buisness_types','broadcasts__broadcast_in_tv').select_related('pi',)
     context = {
         'all_tvs': all_tvs
     }

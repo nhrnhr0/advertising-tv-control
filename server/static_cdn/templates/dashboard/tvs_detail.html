@@ -25,196 +25,6 @@
 
 <form action="/dashboard/tvs/{{tv.id}}/edit/" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-    <div>
-            <h3>שעות פתיחה</h3>
-              <!-- <input type="text" id="time" placeholder="Time"> -->
-
-
-            <div id="openingHours">
-                {% for opening_hour in tv.opening_hours.all %}
-                <input type="hidden" name="opening_hour_id[]" value="{{opening_hour.id}}">
-                <label for="day_{{opening_hour.id}}">ביום</label>
-                <select name="day_{{opening_hour.id}}" id="day_{{opening_hour.id}}" required>
-                    <option value="1" {% if opening_hour.weekday == 1 %}selected{% endif %}>ראשון</option>
-                    <option value="2" {% if opening_hour.weekday == 2 %}selected{% endif %}>שני</option>
-                    <option value="3" {% if opening_hour.weekday == 3 %}selected{% endif %}>שלישי</option>
-                    <option value="4" {% if opening_hour.weekday == 4 %}selected{% endif %}>רביעי</option>
-                    <option value="5" {% if opening_hour.weekday == 5 %}selected{% endif %}>חמישי</option>
-                    <option value="6" {% if opening_hour.weekday == 6 %}selected{% endif %}>שישי</option>
-                    <option value="7" {% if opening_hour.weekday == 7 %}selected{% endif %}>שבת</option>
-                </select>
-                <label for="opening_hour_{{opening_hour.id}}">משעה: </label>
-                <input type="text" class="hour-input" name="opening_hour_{{opening_hour.id}}" id="opening_hour_{{opening_hour.id}}"
-                    value="{{opening_hour.from_hour|time:'G:i'}}" required>
-                <label for="closing_hour_{{opening_hour.id}}"> עד: </label>
-                <input type="text" class="hour-input" name="closing_hour_{{opening_hour.id}}" id="closing_hour_{{opening_hour.id}}"
-                    value="{{opening_hour.to_hour|time:'G:i'}}" required>
-                <input type="checkbox" name="delete_opening_hour_{{opening_hour.id}}"
-                    id="delete_opening_hour_{{opening_hour.id}}"
-                 value="false">מחק
-                <!-- copy button -->
-                <button type="button" onclick="copyOpeningHour({{opening_hour.id}})">
-                    {% include 'assets/icons/copy.svg' with svg_height="15px" svg_width="15px" %}
-                    העתק
-                </button>
-                <br>
-                {% endfor %}
-            </div>
-            <button type="button" onclick="addOpeningHour()">הוסף שעת פתיחה</button>
-        </div>
-
-        <div class="map-container">
-        <label for="hidden-maps-inputs">מיקום</label>
-        <div id="map"></div>
-        <input type="text" style="width:100%;" id="geojson-input" readonly="true" name="geojson-input" value="{{tv.location}}">
-    </div>
-    <div class="form-info">
-        <div>
-            <label for="name">שם העסק
-            </label>
-            <input class="input-field" type="text" name="name" id="name" value="{{tv.name}}" required>
-        </div>
-        <div>
-            <label for="manual_turn_off">כיבוי ידני
-            </label>
-            <!-- checkbox
-             -->
-             <input type="checkbox" name="manual_turn_off" id="manual_turn_off" {% if tv.manual_turn_off %}checked{% endif %}>
-        </div>
-        <div>
-            <label for="address">כתובת
-            </label>
-            <input class="input-field" type="text" name="address" id="address" value="{{tv.address}}">
-            <!-- TODO: use google maps api -->
-        </div>
-        <div>
-            <label for="businesType">סוגי העסק
-            </label>
-            <!-- multiselect searchable input  -->
-            <select name="businessType" id="businessTypeSelect" multiple>
-                {% for business_type in business_types %}
-                <option value="{{business_type.id}}" {% if business_type in tv.buisness_types.all %}selected{% endif %}>
-                    {{business_type.name}}</option>
-                {% endfor %}
-            </select>
-            <a href="/admin/tv/businesstype/add/" target="popup"
-                onclick="window.open('/admin/tv/businesstype/add/','popup','width=600,height=600'); return false;">
-                הוספת סוג עסק חדש
-            </a>
-        </div>
-        <div>
-            <label for="logo">לוגו העסק
-            </label>
-            {% if tv.logo %}
-                <img src="{{tv.logo.url}}" alt="logo" width="100px" height="100px">
-            {% endif %}
-            <input class="input-field" type="file" name="logo" id="logo" accept="image/*">
-            
-        </div>
-        <div>
-            <!-- phone -->
-            <br>
-            <label for="phone">טלפון
-            </label>
-            <input class="input-field" type="tel" name="phone" id="phone" value="{{tv.phone}}" required>
-        </div>
-        <div>
-            <!-- email -->
-            <label for="email">אימייל
-            </label>
-            <input class="input-field" type="email" name="email" id="email" value="{{tv.email}}" required>
-        </div>
-        <div>
-            <!-- contact_name -->
-            <label for="contact_name">שם איש קשר
-            </label>
-            <input class="input-field" type="text" name="contact_name" id="contact_name" value="{{tv.contact_name}}" required>
-        </div>
-        <div>
-            <!-- contact_phone -->
-            <label for="contact_phone">טלפון איש קשר
-            </label>
-            <input class="input-field" type="tel" name="contact_phone" id="contact_phone" value="{{tv.contact_phone}}" required>
-            <br>
-        </div>
-        <div>
-            <!-- not_to_show_list -->
-            <label for="not_to_show_list" class="not_to_show_list_label">מה לא להציג
-            </label>
-            <textarea name="not_to_show_list" id="not_to_show_list" cols="60" rows="5"></textarea>
-            <br>
-            <ul class="ul_list">
-                {% for not_to_show in tv.not_to_show_list.all %}
-                <li>
-                    <div class="li_item not_to_show">
-                        <!-- the created times as hebrew format and the name -->
-                        <span class="date">
-                        {{not_to_show.created|date:"d/m/Y H:i"}}
-                        </span>
-                        <span class="content">
-                         {{not_to_show.content| linebreaksbr }}
-                         </span>
-                    </div>
-
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div>
-            <!-- yes_to_show_list -->
-            <label for="yes_to_show_list"
-            class="yes_to_show_list_label">מה להציג
-            </label>
-            <!-- <input class="input-field" type="text" name="yes_to_show_list" id="yes_to_show_list" value=""> -->
-            <textarea name="yes_to_show_list" id="yes_to_show_list" cols="60" rows="5"></textarea>
-            <br>
-            <ul class="ul_list">
-                {% for yes_to_show in tv.yes_to_show_list.all %}
-                <li>
-                    <div class="li_item yes_to_show">
-                        <!-- the created times as hebrew format and the name -->
-                        <span class="date">
-                        {{yes_to_show.created|date:"d/m/Y H:i"}}
-                        </span>
-                        <span class="content">
-                         {{yes_to_show.content| linebreaksbr }}
-                         </span>
-
-                    </div>
-
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        
-    </div>
-
-
-
-    <!-- broadcasts -->
-    <h3>שידורים</h3>
-    <a href="{{tv.get_tv_display_demo_url}}" target="popup"
-        onclick="window.open('{{tv.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
-        דף דמו (ללא שעות פתיחה וספירות)
-    </a>
-    <br>
-    <a href="{{tv.get_tv_display_demo_url_with_inactive}}" target="popup"
-        onclick="window.open('{{tv.get_tv_display_demo_url_with_inactive}}','popup','width=600,height=600'); return false;">
-        דף דמו (ללא שעות פתיחה, ספירות כולל לא פעילים)
-    </a>
-    <br>
-    <div class="current-playlist">
-        <div class="current-broadcast-info" id="current-broadcast-info"></div>
-        <table id="current-playlist-table">
-
-        </table>
-
-        </table>
-        
-    </div>
-    
-
-    </div>
     <div id="broadcasts">
         <!--
                 broadcast fields:  
@@ -278,6 +88,9 @@
                         {{b_in_tv.broadcast.name|truncatechars:20}}
                     </td>
                     <td>
+                        <a href="{{b_in_tv.broadcast.media.url}}" target="popup"
+                            onclick="window.open('{{b_in_tv.broadcast.media.url}}','popup','width=600,height=600'); return false;">
+
                         {% if b_in_tv.broadcast.media_type == 'image' %}
                         <div class="imageWrapper">
                             <img src="{{b_in_tv.broadcast.media.url}}" alt="{{b_in_tv.broadcast.name}}">
@@ -291,7 +104,7 @@
                         </div>
                         סרטון
                         {% endif %}
-
+                        </a>
 
                     </td>
                     <td>
@@ -521,6 +334,200 @@
     <label for="broadcast_select">בחר שידור</label>
     <div id="broadcast_select">
     </div>
+
+    <div>
+            <h3>שעות פתיחה</h3>
+              <!-- <input type="text" id="time" placeholder="Time"> -->
+
+
+            <div id="openingHours">
+                {% for opening_hour in tv.opening_hours.all %}
+                <input type="hidden" name="opening_hour_id[]" value="{{opening_hour.id}}">
+                <label for="day_{{opening_hour.id}}">ביום</label>
+                <select name="day_{{opening_hour.id}}" id="day_{{opening_hour.id}}" required>
+                    <option value="1" {% if opening_hour.weekday == 1 %}selected{% endif %}>ראשון</option>
+                    <option value="2" {% if opening_hour.weekday == 2 %}selected{% endif %}>שני</option>
+                    <option value="3" {% if opening_hour.weekday == 3 %}selected{% endif %}>שלישי</option>
+                    <option value="4" {% if opening_hour.weekday == 4 %}selected{% endif %}>רביעי</option>
+                    <option value="5" {% if opening_hour.weekday == 5 %}selected{% endif %}>חמישי</option>
+                    <option value="6" {% if opening_hour.weekday == 6 %}selected{% endif %}>שישי</option>
+                    <option value="7" {% if opening_hour.weekday == 7 %}selected{% endif %}>שבת</option>
+                </select>
+                <label for="opening_hour_{{opening_hour.id}}">משעה: </label>
+                <input type="text" class="hour-input" name="opening_hour_{{opening_hour.id}}" id="opening_hour_{{opening_hour.id}}"
+                    value="{{opening_hour.from_hour|time:'G:i'}}" required>
+                <label for="closing_hour_{{opening_hour.id}}"> עד: </label>
+                <input type="text" class="hour-input" name="closing_hour_{{opening_hour.id}}" id="closing_hour_{{opening_hour.id}}"
+                    value="{{opening_hour.to_hour|time:'G:i'}}" required>
+                <input type="checkbox" name="delete_opening_hour_{{opening_hour.id}}"
+                    id="delete_opening_hour_{{opening_hour.id}}"
+                 value="false">מחק
+                <!-- copy button -->
+                <button type="button" onclick="copyOpeningHour({{opening_hour.id}})">
+                    {% include 'assets/icons/copy.svg' with svg_height="15px" svg_width="15px" %}
+                    העתק
+                </button>
+                <br>
+                {% endfor %}
+            </div>
+            <button type="button" onclick="addOpeningHour()">הוסף שעת פתיחה</button>
+        </div>
+
+        <div class="map-container">
+        <label for="hidden-maps-inputs">מיקום</label>
+                <button type="button" id="toggle-zoom" onclick="toggleMapZoom()">הפעל זום</button>
+
+        <div id="map"></div>
+        <input type="text" style="width:100%;" id="geojson-input" readonly="true" name="geojson-input" value="{{tv.location}}">
+    </div>
+    <div class="form-info">
+        <div>
+            <label for="name">שם העסק
+            </label>
+            <input class="input-field" type="text" name="name" id="name" value="{{tv.name}}" required>
+        </div>
+        <div>
+            <label for="manual_turn_off">כיבוי ידני
+            </label>
+            <!-- checkbox
+             -->
+             <input type="checkbox" name="manual_turn_off" id="manual_turn_off" {% if tv.manual_turn_off %}checked{% endif %}>
+        </div>
+        <div>
+            <label for="address">כתובת
+            </label>
+            <input class="input-field" type="text" name="address" id="address" value="{{tv.address}}">
+            <!-- TODO: use google maps api -->
+        </div>
+        <div>
+            <label for="businesType">סוגי העסק
+            </label>
+            <!-- multiselect searchable input  -->
+            <select name="businessType" id="businessTypeSelect" multiple>
+                {% for business_type in business_types %}
+                <option value="{{business_type.id}}" {% if business_type in tv.buisness_types.all %}selected{% endif %}>
+                    {{business_type.name}}</option>
+                {% endfor %}
+            </select>
+            <a href="/admin/tv/businesstype/add/" target="popup"
+                onclick="window.open('/admin/tv/businesstype/add/','popup','width=600,height=600'); return false;">
+                הוספת סוג עסק חדש
+            </a>
+        </div>
+        <div>
+            <label for="logo">לוגו העסק
+            </label>
+            {% if tv.logo %}
+                <img src="{{tv.logo.url}}" alt="logo" width="100px" height="100px">
+            {% endif %}
+            <input class="input-field" type="file" name="logo" id="logo" accept="image/*">
+            
+        </div>
+        <div>
+            <!-- phone -->
+            <br>
+            <label for="phone">טלפון
+            </label>
+            <input class="input-field" type="tel" name="phone" id="phone" value="{{tv.phone}}" required>
+        </div>
+        <div>
+            <!-- email -->
+            <label for="email">אימייל
+            </label>
+            <input class="input-field" type="email" name="email" id="email" value="{{tv.email}}" required>
+        </div>
+        <div>
+            <!-- contact_name -->
+            <label for="contact_name">שם איש קשר
+            </label>
+            <input class="input-field" type="text" name="contact_name" id="contact_name" value="{{tv.contact_name}}" required>
+        </div>
+        <div>
+            <!-- contact_phone -->
+            <label for="contact_phone">טלפון איש קשר
+            </label>
+            <input class="input-field" type="tel" name="contact_phone" id="contact_phone" value="{{tv.contact_phone}}" required>
+            <br>
+        </div>
+        <div>
+            <!-- not_to_show_list -->
+            <label for="not_to_show_list" class="not_to_show_list_label">מה לא להציג
+            </label>
+            <textarea name="not_to_show_list" id="not_to_show_list" cols="60" rows="5"></textarea>
+            <br>
+            <ul class="ul_list">
+                {% for not_to_show in tv.not_to_show_list.all %}
+                <li>
+                    <div class="li_item not_to_show">
+                        <!-- the created times as hebrew format and the name -->
+                        <span class="date">
+                        {{not_to_show.created|date:"d/m/Y H:i"}}
+                        </span>
+                        <span class="content">
+                         {{not_to_show.content| linebreaksbr }}
+                         </span>
+                    </div>
+
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <!-- yes_to_show_list -->
+            <label for="yes_to_show_list"
+            class="yes_to_show_list_label">מה להציג
+            </label>
+            <!-- <input class="input-field" type="text" name="yes_to_show_list" id="yes_to_show_list" value=""> -->
+            <textarea name="yes_to_show_list" id="yes_to_show_list" cols="60" rows="5"></textarea>
+            <br>
+            <ul class="ul_list">
+                {% for yes_to_show in tv.yes_to_show_list.all %}
+                <li>
+                    <div class="li_item yes_to_show">
+                        <!-- the created times as hebrew format and the name -->
+                        <span class="date">
+                        {{yes_to_show.created|date:"d/m/Y H:i"}}
+                        </span>
+                        <span class="content">
+                         {{yes_to_show.content| linebreaksbr }}
+                         </span>
+
+                    </div>
+
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+    </div>
+
+
+
+    <!-- broadcasts -->
+    <h3>שידורים</h3>
+    <a href="{{tv.get_tv_display_demo_url}}" target="popup"
+        onclick="window.open('{{tv.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
+        דף דמו (ללא שעות פתיחה וספירות)
+    </a>
+    <br>
+    <a href="{{tv.get_tv_display_demo_url_with_inactive}}" target="popup"
+        onclick="window.open('{{tv.get_tv_display_demo_url_with_inactive}}','popup','width=600,height=600'); return false;">
+        דף דמו (ללא שעות פתיחה, ספירות כולל לא פעילים)
+    </a>
+    <br>
+    <div class="current-playlist">
+        <div class="current-broadcast-info" id="current-broadcast-info"></div>
+        <table id="current-playlist-table">
+
+        </table>
+
+        </table>
+        
+    </div>
+    
+
+    </div>
+    
 
 
 
@@ -959,13 +966,13 @@
         getBroadcasts();
         initMap();
     }
-
-
+    
+    let map = null;
     function initMap() {
         var center = [31.37857870948204, 34.69895372415273];
 
         // Create the map
-        var map = L.map('map').setView(center, 9.25);
+        map = L.map('map').setView(center, 9.25);
 
         // Set up the OSM layer
         L.tileLayer(
@@ -1039,6 +1046,8 @@
             editableLayers.addLayer(layer);
         });
 
+
+
         debugger;
         // original_json != empty object
         if (Object.keys(original_json).length > 0) {
@@ -1046,6 +1055,21 @@
             let marker = L.marker(original_json.geometry.coordinates.reverse()).addTo(editableLayers);
             map.setView(original_json.geometry.coordinates, 9.25);
         }
+        map.scrollWheelZoom.disable();
+    }
+
+    function toggleMapZoom() {
+        let new_text = ''
+        if(map) {
+            if (map.scrollWheelZoom.enabled()) {
+                map.scrollWheelZoom.disable();
+                new_text = 'הפעל זום'
+            } else {
+                map.scrollWheelZoom.enable();
+                new_text = 'בטל זום'
+            }
+        }
+        document.getElementById('toggle-zoom').innerHTML = new_text;
     }
 
     
@@ -1055,14 +1079,19 @@
 </script>
 
 <style>
+    #toggle-zoom {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
     .map-container {
         position: relative;
         width: 100%;
         height: 550px;
         max-width: 42vw;
-        margin: 0 calc(100% - 55vw - 50px);
-        position: absolute;
-        top: 200px;
+        margin-bottom: 50px;
+        /* margin: 0 calc(100% - 55vw - 50px); */
+        /* position: absolute;
+        top: 200px; */
     }
 
     #map {
@@ -1214,13 +1243,7 @@
         position: fixed;
         bottom: 40px;
         left: 40px;
-        /* width: 100%; */
-        /* height: 100px; */
-        /* display: flex;
-        justify-content: center;
-        align-items: center;
-        background: #f3f3f3;
-        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px; */
+        
     }
     .submit-button {
         width: 200px;
