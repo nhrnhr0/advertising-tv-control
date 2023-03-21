@@ -21,7 +21,7 @@ class Broadcast(models.Model):
     media = models.FileField(upload_to='broadcasts/', blank=True, null=True)
     media_type = models.CharField(max_length=100, blank=True, null=True)
     history = JSONField(default=list, blank=True, null=True)
-    
+    deleted = models.BooleanField(default=False)
     class Meta:
         ordering = ['-created',]
     def __str__(self):
@@ -129,10 +129,10 @@ class Tv(models.Model):
     location= JSONField(max_length=200, blank=True, null=True)
     buisness_types = models.ManyToManyField(BusinessType, blank=True, related_name='tvs', verbose_name=_('Business type'))
     logo = models.ImageField(upload_to='tv-logos/', blank=True, null=True)
-    phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'))
-    email = models.CharField(max_length=100, blank=True, verbose_name=_('Email'))
-    contact_name = models.CharField(max_length=100, blank=True, verbose_name=_('Contact name'))
-    contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'))
+    phone = models.CharField(max_length=100, blank=True, verbose_name=_('Phone'), default='0')
+    email = models.CharField(max_length=100, blank=True, verbose_name=_('Email'), default='A@A.com')
+    contact_name = models.CharField(max_length=100, blank=True, verbose_name=_('Contact name'), default='-')
+    contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'), default='0')
     not_to_show_list = models.ManyToManyField(ContentWithHistory, blank=True, related_name='not_to_show_list')
     yes_to_show_list = models.ManyToManyField(ContentWithHistory, blank=True, related_name='yes_to_show_list')
     web_link = models.CharField(max_length=255, blank=True)
@@ -142,7 +142,8 @@ class Tv(models.Model):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
-    
+    class Meta:
+        ordering = ['-created',]
     def get_location_json(self):
         return self.location or {}
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
@@ -184,14 +185,21 @@ class Tv(models.Model):
             return True
         return False
     
+    def get_active_broadcast_to_total_str(self):
+        return f'{self.active_broadcasts().count()}/{self.get_broadcasts().count()}'
+    
     def active_broadcasts(self):
         return self.broadcasts.filter(broadcast_in_tv__active=True)
+        # return empty queryset
+        # return self.broadcasts.none()
     
     def inactive_broadcasts(self):
         return self.broadcasts.filter(broadcast_in_tv__active=False)
     
     def get_broadcasts(self):
         return self.broadcasts.all()
+        # return empty queryset
+        # return self.broadcasts.none()
     
     def pi_admin_link(self):
         if self.pi:

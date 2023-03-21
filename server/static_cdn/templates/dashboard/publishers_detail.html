@@ -14,6 +14,35 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw.css">
 
 <style>
+    .delete-button{
+        background-color: #ff0000;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 5px;
+        cursor: pointer;
+    }
+    #toggle-zoom {
+        
+        margin-bottom: 10px;
+    }
+    /* floating submit button on the left button side of the screen */
+    .submit-button-wraper {
+        position: fixed;
+        bottom: 40px;
+        left: 40px;
+        
+    }
+    .submit-button {
+        width: 200px;
+        height: 50px;
+        background: #2d77e6;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+        cursor: pointer;
+    }
     .history-button:hover+.history-table,
     .history-button:active+.history-table {
         visibility: visible;
@@ -39,14 +68,14 @@
         width: 100%;
         height: 550px;
         max-width: 50vw;
-        margin: 0 calc(100% - 50vw - 50px);
-        position: absolute;
-        top: 200px;
+        
+        margin-bottom: 50px;
     }
 
     #map {
         height: 550px;
     }
+
 </style>
 {% endblock %}
 
@@ -54,11 +83,221 @@
 {% block content %}
 <!-- show the details of the publishers (name and broadcasts) -->
 <h2>מפרסם: {{publisher.name}}</h2>
+
+{% include "dashboard/components/new_broadcast.html" %}
+<h3>שידורים קיימים</h3>
+<table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>מדיה</th>
+            <th>שם השידור</th>
+            <th>נוצר ב</th>
+            <!-- <th>סוג השידור</th> -->
+            <th>פעולות</th>
+            <th>טלוויזיות</th>
+            <th>היסטוריה</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for broadcast in publisher.broadcasts.all %}
+        <tr>
+            <td>{{broadcast.id}}</td>
+            {%if broadcast.deleted %}
+                <td colspan="6" style="background-color: #918e8e; color: white;">השידור נמחק
+                    <a href="/admin/tv/broadcast/{{broadcast.id}}/change/" target="popup"
+                        onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/change/','popup','width=600,height=600'); return false;">
+                        לאדמין
+                    </a>
+                </td>
+            {% else %}
+                <td>
+                    <a href="{{broadcast.media.url}}" target="popup"
+                        onclick="window.open('{{broadcast.media.url}}','popup','width=600,height=600'); return false;">
+
+                    {% if broadcast.media_type == 'image' %}
+                    <div class="imageWrapper">
+                        <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
+                    </div>
+                    תמונה
+                    {% elif broadcast.media_type == 'video' %}
+                    <div class="videoWrapper">
+                        <!-- <video muted autoplay loop>
+                            <source src="{{broadcast.media.url}}" type="video/mp4">
+                        </video> -->
+                        <video muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;" loop>
+                            <source src="{{broadcast.media.url}}" type="video/mp4">
+                        </video>
+                        סרטון
+                    </div>
+                    {% endif %}
+                    </a>
+                </td>
+            
+                <td title="{{broadcast.media.url}}">{{broadcast.name|truncatechars:20}}</td>
+                <td>
+                    <script type="text/javascript">
+                        var date = `{{broadcast.created|date:"c"}}`
+                        date = new Date(date);
+                        document.write(date.toLocaleString('he-IL', {
+                            timeZone: 'Asia/Jerusalem'
+                        }));
+                    </script>
+                </td>
+                <!-- <td>{{broadcast.media_type}}</td> -->
+
+                <td>
+                    <a href="{{broadcast.get_tv_display_demo_url}}" target="popup"
+                        onclick="window.open('{{broadcast.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
+                        דף דמו
+                    </a>
+                    <br>
+                    <a href="/admin/tv/broadcast/{{broadcast.id}}/change/" target="popup"
+                        onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/change/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">ערוך</a>
+                    <br>
+                    <!-- <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/" target="popup"
+                        onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a> -->
+                        <button class="delete-button" type="button" data-broadcast-id="{{broadcast.id}}"
+                        onclick="deleteBroadcast(this)"
+                        >מחק
+                        </button>
+
+                </td>
+                <td>
+                    <ul>
+                        {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
+                        <li>
+                            <span>
+                                <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
+                                    {{broad_in_tv.tv}}
+                                </a>
+                            </span>
+                            {% empty %}
+                            <span>לא פעיל בשום טלוויזיה</span>
+                        </li>
+                        {% endfor %}
+
+                    </ul>
+                </td>
+                <td>
+                    <button class="history-button" type="button">
+                        היסטוריה ({{broadcast.history|length}})
+                    </button>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    תאריך
+                                </th>
+                                <th>
+                                    טלוויזיה
+                                </th>
+                                <th>
+                                    פעולה
+                                </th>
+                                <th>
+                                    כמות לפני
+                                </th>
+                                <th>
+                                    כמות שהוספה
+                                </th>
+                                <th>
+                                    כמות חדשה
+                                </th>
+                                <th>
+                                    מחיר מכירה
+                                </th>
+                                <th>
+                                    הערה
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- iterate broadcast history in reverse -->
+                            {% for history in broadcast.history reversed %}
+                            <tr>
+                                <td>
+                                    <script type="text/javascript">
+                                        var date = "{{history.time}}";
+                                        date = date.replace("Z", "");
+                                        date = new Date(date);
+                                        date = new Intl.DateTimeFormat('he-IL', {
+                                            year: 'numeric',
+                                            month: 'numeric',
+                                            day: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                            hour12: false
+                                        }).format(date);
+                                        document.write(date);
+                                    </script>
+                                </td>
+                                <td>
+                                    {{history.tv_name}}
+                                </td>
+                                <td>
+                                    {%if history.action == 'add_to_tv' %}
+                                    הוסף לטלוויזיה
+                                    {% elif history.action == 'change_left_plays' %}
+                                    שינוי כמות
+                                    {% endif %}
+                                </td>
+                                {%if history.action == 'add_to_tv' %}
+                                <td>
+                                    -
+                                </td>
+                                <td>
+                                    {{history.plays}}
+                                </td>
+                                <td>
+                                    {{history.plays}}
+                                </td>
+                                {% elif history.action == 'change_left_plays' %}
+                                <td>
+                                    {{history.plays_before}}
+                                </td>
+                                <td>
+                                    {%if history.plays_added > 0 %}
+                                    +{{history.plays_added}}
+                                    {% else %}
+                                    {{history.plays_added}}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{history.plays}}
+                                </td>
+                                {% endif %}
+                                <td>
+                                    {%if history.price %}
+                                    {{history.price}} ש"ח
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{history.note}}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                </td>
+            {%endif%}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
 <form action="/dashboard/publishers/{{publisher.id}}/edit/" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <h2>פרטי המפרסם</h2>
     <div class="map-container">
         <label for="hidden-maps-inputs">אזור עבודה</label>
+        <button type="button" id="toggle-zoom" onclick="toggleMapZoom()">הפעל זום</button>
         <div id="map"></div>
         <input type="hidden" id="hidden-maps-inputs" name="geojson" value="{{publisher.geojson}}">
     </div>
@@ -136,197 +375,32 @@
     </select>
     <br>
 
-    <input type="submit" value="שמור">
+    <div class="submit-button-wraper">
+        <input type="submit" value="שמור" class="submit-button">
+    </div>
 </form>
-{% include "dashboard/components/new_broadcast.html" %}
-<h3>שידורים קיימים</h3>
-<table>
-    <thead>
-        <tr>
-            <th>id</th>
-            <th>מדיה</th>
-            <th>שם השידור</th>
-            <th>נוצר ב</th>
-            <th>סוג השידור</th>
-            <th>פעולות</th>
-            <th>טלוויזיות</th>
-            <th>היסטוריה</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for broadcast in publisher.broadcasts.all %}
-        <tr>
-            <td>{{broadcast.id}}</td>
-            <td>
-                {% if broadcast.media_type == 'image' %}
-                <div class="imageWrapper">
-                    <img src="{{broadcast.media.url}}" alt="{{broadcast.name}}">
-                </div>
-                {% elif broadcast.media_type == 'video' %}
-                <div class="videoWrapper">
-                    <!-- <video muted autoplay loop>
-                        <source src="{{broadcast.media.url}}" type="video/mp4">
-                    </video> -->
-                    <video muted onmouseover="this.play()" onmouseout="this.pause();this.currentTime=0;" loop>
-                        <source src="{{broadcast.media.url}}" type="video/mp4">
-                    </video>
-                </div>
-                {% endif %}
-            </td>
-            <td title="{{broadcast.media.url}}">{{broadcast.name|truncatechars:20}}</td>
-            <td>
-                <script type="text/javascript">
-                    var date = `{{broadcast.created|date:"c"}}`
-                    date = new Date(date);
-                    document.write(date.toLocaleString('he-IL', {
-                        timeZone: 'Asia/Jerusalem'
-                    }));
-                </script>
-            </td>
-            <td>{{broadcast.media_type}}</td>
 
-            <td>
-                <a href="{{broadcast.get_tv_display_demo_url}}" target="popup"
-                    onclick="window.open('{{broadcast.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
-                    דף דמו
-                </a>
-                <br>
-                <a href="/admin/tv/broadcast/{{broadcast.id}}/change/" target="popup"
-                    onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/change/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">ערוך</a>
-                <br>
-                <a href="/admin/tv/broadcast/{{broadcast.id}}/delete/" target="popup"
-                    onclick="window.open('/admin/tv/broadcast/{{broadcast.id}}/delete/?_to_field=id&_popup=1','popup','width=600,height=600'); return false;">מחק</a>
-
-            </td>
-            <td>
-                <ul>
-                    {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
-                    <li>
-                        <span>
-                            <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">
-                                {{broad_in_tv.tv}}
-                            </a>
-                        </span>
-                        {% empty %}
-                        <span>לא פעיל בשום טלוויזיה</span>
-                    </li>
-                    {% endfor %}
-
-                </ul>
-            </td>
-            <td>
-                <button class="history-button" type="button">
-                    היסטוריה ({{broadcast.history|length}})
-                </button>
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>
-                                תאריך
-                            </th>
-                            <th>
-                                טלוויזיה
-                            </th>
-                            <th>
-                                פעולה
-                            </th>
-                            <th>
-                                כמות לפני
-                            </th>
-                            <th>
-                                כמות שהוספה
-                            </th>
-                            <th>
-                                כמות חדשה
-                            </th>
-                            <th>
-                                מחיר מכירה
-                            </th>
-                            <th>
-                                הערה
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- iterate broadcast history in reverse -->
-                        {% for history in broadcast.history reversed %}
-                        <tr>
-                            <td>
-                                <script type="text/javascript">
-                                    var date = "{{history.time}}";
-                                    date = date.replace("Z", "");
-                                    date = new Date(date);
-                                    date = new Intl.DateTimeFormat('he-IL', {
-                                        year: 'numeric',
-                                        month: 'numeric',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric',
-                                        hour12: false
-                                    }).format(date);
-                                    document.write(date);
-                                </script>
-                            </td>
-                            <td>
-                                {{history.tv_name}}
-                            </td>
-                            <td>
-                                {%if history.action == 'add_to_tv' %}
-                                הוסף לטלוויזיה
-                                {% elif history.action == 'change_left_plays' %}
-                                שינוי כמות
-                                {% endif %}
-                            </td>
-                            {%if history.action == 'add_to_tv' %}
-                            <td>
-                                -
-                            </td>
-                            <td>
-                                {{history.plays}}
-                            </td>
-                            <td>
-                                {{history.plays}}
-                            </td>
-                            {% elif history.action == 'change_left_plays' %}
-                            <td>
-                                {{history.plays_before}}
-                            </td>
-                            <td>
-                                {%if history.plays_added > 0 %}
-                                +{{history.plays_added}}
-                                {% else %}
-                                {{history.plays_added}}
-                                {% endif %}
-                            </td>
-                            <td>
-                                {{history.plays}}
-                            </td>
-                            {% endif %}
-                            <td>
-                                {%if history.price %}
-                                {{history.price}} ש"ח
-                                {% else %}
-                                -
-                                {% endif %}
-                            </td>
-                            <td>
-                                {{history.note}}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-
+    <!-- <form action="/dashboard/publishers/delete-broadcast" method="post" id="delete-broadcast-form">
+        {% csrf_token %}
+        <input type="hidden" name="delete_broadcast_id" id="delete_broadcast_id">
+    </form> -->
 
 <script type="text/javascript">
+    let map = null;
+    
+    function toggleMapZoom() {
+        let new_text = ''
+        if(map) {
+            if (map.scrollWheelZoom.enabled()) {
+                map.scrollWheelZoom.disable();
+                new_text = 'הפעל זום'
+            } else {
+                map.scrollWheelZoom.enable();
+                new_text = 'בטל זום'
+            }
+        }
+        document.getElementById('toggle-zoom').innerHTML = new_text;
+    }
     function initMap() {
         let originalPolygon = `{{publisher.geojson|safe}}`;
         if (originalPolygon && originalPolygon != "None" && originalPolygon != "{}") {
@@ -340,7 +414,7 @@
         var center = [31.37857870948204, 34.69895372415273];
 
         // Create the map
-        var map = L.map('map').setView(center, 9.25);
+        map = L.map('map').setView(center, 9.25);
 
         // Set up the OSM layer
         L.tileLayer(
@@ -394,6 +468,10 @@
         var editableLayers = new L.FeatureGroup();
         map.addLayer(editableLayers);
 
+        
+        
+
+
         map.on('draw:created', function (e) {
             var type = e.layerType,
                 layer = e.layer;
@@ -410,6 +488,8 @@
 
             editableLayers.addLayer(layer);
         });
+
+        map.scrollWheelZoom.disable();
     }
 
     function initAutoComplete() {
@@ -427,6 +507,31 @@
         });
     }
 
+    function deleteBroadcast(delBtn) {
+        // prompt the user to confirm
+        let confirm = window.confirm("האם אתה בטוח שברצונך למחוק את השידור?");
+        if (confirm) {
+            // delete the broadcast
+            let broadcast_id = delBtn.getAttribute('data-broadcast-id');
+            // send a post to `/dashboard/publishers/delete-broadcast`
+            // with the broadcast id, and csrf token
+            let csrf_token = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '/dashboard/publishers/delete-broadcast');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                debugger;
+                if (xhr.status === 200) {
+                    // remove the broadcast from the page
+                    debugger;
+                    window.location.reload();
+                } else {
+                    alert('Request failed.  Returned status of ' + xhr.status);
+                }
+            };
+            xhr.send(`csrfmiddlewaretoken=${csrf_token}&delete_broadcast_id=${broadcast_id}`);
+        }
+    }
     initMap();
     initAutoComplete();
 </script>
