@@ -4,10 +4,12 @@
 sudo apt update
 sudo apt install nginx
 sudo apt install redis
+sudo apt install supervisor
 sudo systemctl restart redis-server
 
 
 sudo cp setup/daphne_workers.conf /etc/supervisor/conf.d/daphne_workers.conf
+sudo mkdir /var/log/gunicorn
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl restart daphne_workers

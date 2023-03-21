@@ -4,7 +4,7 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['adv-tv-control.ms-global.co.il',]
+ALLOWED_HOSTS = ['adv-tv-control.ms-global.co.il','adv-tv-control.boost-pop.com',]
 CSRF_TRUSTED_ORIGINS = ['https://adv-tv-control.ms-global.co.il',]
 
 DATABASES = {
