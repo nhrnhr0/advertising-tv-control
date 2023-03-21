@@ -194,7 +194,9 @@ class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
         data = serializer.data
         return self.get_paginated_response(data)
 
-
+def tvs_action(request):
+    # TODO: add action to tvs
+    pass
 def dashboard_tvs_view(request):
     from tv.models import Tv
     if not request.user.is_authenticated or not request.user.is_superuser:
