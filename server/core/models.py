@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
 
+from tv.models import Broadcast
+
 class PublisherType(models.Model):
     name = models.CharField(max_length=100)
     updated = models.DateTimeField(auto_now=True)
@@ -18,7 +20,7 @@ class Publisher(models.Model):
     #     on_delete=models.CASCADE,
     # )
     name = models.CharField(max_length=100)
-    broadcasts = models.ManyToManyField('tv.Broadcast', blank=True, related_name='publisher')
+    # broadcasts = models.ManyToManyField('tv.Broadcast', blank=True, related_name='publisher')
     about = models.TextField(blank=True)
     geojson = JSONField(blank=True, null=True)
     publishers_types = models.ManyToManyField(PublisherType, blank=True, related_name='publishers', verbose_name=_('publishers types'))
@@ -30,10 +32,18 @@ class Publisher(models.Model):
     contact_phone = models.CharField(max_length=100, blank=True, verbose_name=_('Contact phone'), default='0')
     qr_link = models.CharField(max_length=100, blank=True, verbose_name=_('QR link'))
     adv_agency = models.ForeignKey('tv.AdvertisingAgency', on_delete=models.CASCADE, blank=True, null=True, related_name='publishers')
+    # broadcasts = models.ForeignKey('tv.Broadcast', on_delete=models.CASCADE, blank=True, null=True, related_name='publisher')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     pass
+    def __str__(self):
+        return self.name
 
     def active_broadcasts(self):
-        return self.broadcasts.filter(broadcast_in_tv__active=True, broadcast_in_tv__plays_left__gt=0)
+        if self.broadcasts:
+            return self.broadcasts.filter(broadcast_in_tv__active=True, broadcast_in_tv__plays_left__gt=0)
+        # return self.broadcasts.filter(broadcast_in_tv__active=True, broadcast_in_tv__plays_left__gt=0)
+        return Broadcast.objects.none()
 
 
 

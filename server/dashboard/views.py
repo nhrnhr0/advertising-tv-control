@@ -23,7 +23,7 @@ def dashboard_publishers_view(request):
     
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
-    all_publishers = Publisher.objects.all()
+    all_publishers = Publisher.objects.all().prefetch_related('broadcasts').select_related('adv_agency')
     context = {
         'all_publishers': all_publishers
     }
@@ -235,10 +235,10 @@ def tvs_detail(request, id):
     # from tv.models import Tv, BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
-    tv = Tv.objects.get(id=id)
+    tv = Tv.objects.select_related('pi').prefetch_related('buisness_types','broadcasts','broadcasts__broadcast_in_tv', 'opening_hours').get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
     # broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
-    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order')
+    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order').select_related('broadcast', 'tv').prefetch_related('broadcast__publisher')
 
     publishers = Publisher.objects.all()
     # broadcasts_paginator = Paginator(broadcasts, page_size)

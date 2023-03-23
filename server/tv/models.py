@@ -22,6 +22,7 @@ class Broadcast(models.Model):
     media_type = models.CharField(max_length=100, blank=True, null=True)
     history = JSONField(default=list, blank=True, null=True)
     deleted = models.BooleanField(default=False)
+    publisher = models.ForeignKey('core.Publisher', on_delete=models.CASCADE, blank=True, null=True, related_name='broadcasts')
     class Meta:
         ordering = ['-created',]
     def __str__(self):
