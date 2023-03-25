@@ -228,7 +228,14 @@ class ChatConsumer(WebsocketConsumer):
                 tv = self.pi_device.tv
                 opening_hours_qs = tv.opening_hours.all()
                 opening_hours = OpeningHoursSerializer(opening_hours_qs, many=True).data
-                manual_turn_off = tv.manual_turn_off
+                # get globalSettings and check if all the tvs should be off
+                from globalSettings.models import get_global_settings
+                set = get_global_settings()
+                if set:
+                    off_all_tvs = set.turn_off_all_tvs
+                else:
+                    off_all_tvs = False
+                manual_turn_off = tv.manual_turn_off or off_all_tvs
                 self.send(text_data=json.dumps({
                         'type': 'opening_hours',
                         'opening_hours': opening_hours,

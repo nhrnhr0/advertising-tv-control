@@ -1,5 +1,5 @@
 from django.contrib import admin
-from  core.models import Publisher,PublisherType
+from  core.models import Publisher,PublisherType, OpeningHours
 # class UserBroadcastsInline(admin.TabularInline):
 #     model = Publisher.broadcasts.through
 #     extra = 1
@@ -17,3 +17,8 @@ class PublisherTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     list_filter = ('name',)
 admin.site.register(PublisherType, PublisherTypeAdmin)
+
+class OpeningHoursAdmin(admin.ModelAdmin):
+    list_display = ('id', 'weekday','from_hour','to_hour',)
+    list_filter = ('weekday','from_hour','to_hour',)
+admin.site.register(OpeningHours, OpeningHoursAdmin)

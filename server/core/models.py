@@ -62,7 +62,7 @@ class OpeningHours(models.Model):
     class Meta:
         verbose_name = _('Opening Hours')  # plurale tantum
         verbose_name_plural = _('Opening Hours')
-        ordering = ['tv', 'weekday', 'from_hour']
+        ordering = ['weekday', 'from_hour']
     
     weekday = models.IntegerField(_('Weekday'), choices=WEEKDAYS)
     from_hour = models.TimeField(_('Opening'))

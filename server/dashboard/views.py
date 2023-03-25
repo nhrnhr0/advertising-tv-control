@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 # Create your views here.
 from core.models import Publisher
 from dashboard.serializers import PublisherAssetsSerializer
+from core.models import TvOpeningHours
 from tv.models import BroadcastInTv,Tv, Broadcast
 from tv.models import AdvertisingAgency
 from tv.models import BusinessType
@@ -226,6 +227,23 @@ def tvs_add_view(request):
         if not tv_name:
             return redirect('dashboard_tvs_view')
         tv = Tv.objects.create(name=tv_name)
+        
+        # get default opening hours and broadcasts
+        # from the first obj of GlobalSettings
+        from globalSettings.models import get_global_settings
+        globalSettings = get_global_settings()
+        openingHoursM2m = globalSettings.defult_opening_hours
+        for oh in openingHoursM2m.all():
+            obj = TvOpeningHours.objects.create(tv=tv, weekday=oh.weekday, from_hour=oh.from_hour, to_hour=oh.to_hour)
+            obj.save()
+        
+        
+        broadcastsM2m = globalSettings.defult_broadcasts
+        order = 0
+        for b in broadcastsM2m.all():
+            obj = BroadcastInTv.objects.create(tv=tv, broadcast=b, order=order, active=True,master=True,enable_countdown=False,plays_left=1)
+            obj.save()
+            order += 10
         tv.save()
     return redirect('dashboard_tvs_view')
 

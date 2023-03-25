@@ -49,9 +49,7 @@ INSTALLED_APPS = [
     # own apps
     'core',
     'tv',
-    
-
-
+    'globalSettings',
 ]
 
 MIDDLEWARE = [
