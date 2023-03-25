@@ -35,10 +35,11 @@ class Broadcast(models.Model):
             media_type = url.split('.')[-1].lower() # video/image
             if media_type == 'mp4':
                 self.media_type = 'video'
-            elif media_type == 'jpg' or media_type == 'png' or media_type == 'jpeg' or media_type == 'gif' or media_type == 'svg' or media_type == 'webp':
+            elif media_type == 'jpg' or media_type == 'png' or media_type == 'jpeg' or media_type == 'svg' or media_type == 'webp':
                 self.media_type = 'image'
             else:
-                self.media_type = 'unknown'
+                # self.media_type = 'unknown'
+                raise Exception('unknown media type: ' + self.media.url)
         return super().save(*args, **kwargs)
 
     def get_tv_display_demo_url(self):
@@ -58,6 +59,7 @@ class BroadcastInTv(models.Model):
     plays_left = models.IntegerField(default=0)
     telegram_notification_in = models.IntegerField(default=0)
     telegram_notification_sent = models.BooleanField(default=False)
+    enable_countdown = models.BooleanField(default=True)
     
     def get_broadcasts_history(self):
         ret = self.broadcast.history
@@ -84,6 +86,7 @@ class BroadcastInTv(models.Model):
         
         callback_data_broadcast_reminder_half = json.dumps({'action':'notification_half','id':self.id})
         callback_data_broadcast_reminder_0 = json.dumps({'action':'notification_0','id':self.id})
+        callback_data_broadcast_reminder_multiply = json.dumps({'action':'notification_multiply','id':self.id})
         
         send_admin_message(f'שידור <b>{self.broadcast.name}</b> בטלוויזיה <b>{self.tv.name}</b> יפוג בעוד <b>{self.plays_left}</b> שידורים. \n<a href="{BASE_MY_DOMAIN}{self.tv.get_dashboard_url()}">לטלוויזיה</a>',reply_markup=
                            InlineKeyboardMarkup([[
@@ -95,6 +98,10 @@ class BroadcastInTv(models.Model):
                                       text="הזכר לי ב0" ,
                                         callback_data=callback_data_broadcast_reminder_0
                                  ),
+                                InlineKeyboardButton(
+                                        text="הכפל כמות שידורים" ,
+                                        callback_data=callback_data_broadcast_reminder_multiply
+                                    ),
                             ]]), parse_mode=ParseMode.HTML,asset=self.broadcast.media,asset_type=self.broadcast.media_type)
         self.telegram_notification_sent = True
     
@@ -143,7 +150,9 @@ class Tv(models.Model):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
+    # order = models.IntegerField(default=0)
     class Meta:
+        # ordering = ['order','-created',]
         ordering = ['-created',]
     def get_location_json(self):
         return self.location or {}

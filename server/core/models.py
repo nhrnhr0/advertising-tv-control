@@ -58,7 +58,23 @@ WEEKDAYS = [
     (7, _("Saturday")),
     
 ]
-
+class OpeningHours(models.Model):
+    class Meta:
+        verbose_name = _('Opening Hours')  # plurale tantum
+        verbose_name_plural = _('Opening Hours')
+        ordering = ['tv', 'weekday', 'from_hour']
+    
+    weekday = models.IntegerField(_('Weekday'), choices=WEEKDAYS)
+    from_hour = models.TimeField(_('Opening'))
+    to_hour = models.TimeField(_('Closing'))
+    def get_weekday_display(self):
+        return dict(WEEKDAYS)[self.weekday]
+    def __str__(self):
+        return _("%(weekday)s (%(from_hour)s - %(to_hour)s)") % {
+            'weekday': self.get_weekday_display(),
+            'from_hour': self.from_hour,
+            'to_hour': self.to_hour
+        }
 class TvOpeningHours(models.Model):
     """
     Store opening times of company premises,

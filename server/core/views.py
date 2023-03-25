@@ -66,6 +66,15 @@ def telegram_webhook_view(request):
                 b_in_tv.telegram_notification_in = 0
                 b_in_tv.telegram_notification_sent = False
                 b_in_tv.save()
+            elif action == 'notification_multiply':
+                # get the broadcast
+                broadcast_in_tv_id = callback_data['id']
+                # get the broadcast
+                b_in_tv = BroadcastInTv.objects.get(id=broadcast_in_tv_id)
+                b_in_tv.plays_left = b_in_tv.plays_left * 2
+                b_in_tv.telegram_notification_in = int((b_in_tv.plays_left or 1) / 2)
+                b_in_tv.telegram_notification_sent = False
+                
             # remove keyboard from message
             edit_message_reply_markup(message_id=callback_query['message']['message_id'])
             

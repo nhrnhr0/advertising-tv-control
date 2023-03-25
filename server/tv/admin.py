@@ -18,7 +18,8 @@ class TvAdmin(admin.ModelAdmin):
     inlines = [BroadcastInline, openingHoursInline]
 admin.site.register(Tv, TvAdmin)
 class BroadcastAdmin(admin.ModelAdmin):
-    list_display = ('name','media_type', 'created', 'updated',)
+    list_display = ('name','media_type', 'created', 'updated','publisher',)
+    list_editable = ('publisher',)
 admin.site.register(Broadcast, BroadcastAdmin)
 class BroadcastInTvAdmin(admin.ModelAdmin):
     list_display = ('tv', 'broadcast', 'duration', 'created', 'updated',)

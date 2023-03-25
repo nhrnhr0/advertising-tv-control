@@ -94,10 +94,11 @@ def save_broadcasts_played(request):
                     added += 1
                     broadcast_in_tv = BroadcastInTv.objects.get(broadcast_id=broadcast_id, tv_id=tv_display_id)
                     if is_approved:
-                        broadcast_in_tv.plays_left -= 1
-                        if broadcast_in_tv.plays_left <= 0:
-                            # broadcast_in_tv.plays_left = 0
-                            broadcast_in_tv.is_active = False
+                        if broadcast_in_tv.enable_countdown:
+                            broadcast_in_tv.plays_left -= 1
+                            if broadcast_in_tv.plays_left <= 0:
+                                # broadcast_in_tv.plays_left = 0
+                                broadcast_in_tv.is_active = False
                         if broadcast_in_tv.need_to_send_telegram_notification():
                             broadcast_in_tv.send_telegram_notification()
                         

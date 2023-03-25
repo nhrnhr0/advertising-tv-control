@@ -21,8 +21,26 @@
 <h2>טלוויזיה: {{tv.name}}</h2>
 <h4>
     <a href="/admin/tv/tv/{{tv.id}}/change/" target="_blank">עריכה באדמין</a>
+    {%if tv.pi %}
+        <br>
+        <a href="/admin/pi/pidevice/?device_id={{tv.pi.device_id}}" target="popup"
+                        onclick="window.open('/admin/pi/pidevice/?device_id={{tv.pi.device_id}}','popup','width=600,height=600'); return false;">לאדמין
+                        הפיי</a>
+                        
+    {% endif %}
+    
 </h4>
 
+<a href="{{tv.get_tv_display_demo_url}}" target="popup"
+    onclick="window.open('{{tv.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
+    דף דמו (ללא שעות פתיחה וספירות)
+</a>
+<br>
+<a href="{{tv.get_tv_display_demo_url_with_inactive}}" target="popup"
+    onclick="window.open('{{tv.get_tv_display_demo_url_with_inactive}}','popup','width=600,height=600'); return false;">
+    דף דמו (ללא שעות פתיחה, ספירות כולל לא פעילים)
+</a>
+<br>
 <form action="/dashboard/tvs/{{tv.id}}/edit/" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <div id="broadcasts">
@@ -123,7 +141,17 @@
                             {% if b_in_tv.master %}checked{% endif %}>
                     </td>
                     <td>
-                        {{b_in_tv.plays_left}}
+                        {%if b_in_tv.enable_countdown%}
+                            {{b_in_tv.plays_left}}
+                        {% else %}
+                            -
+                        {%endif%}
+                        <br>
+                        הפעל ספירות:
+                        <input type="checkbox" name="b_in_tv_{{b_in_tv.id}}_enable_countdown"
+                            {% if b_in_tv.enable_countdown %}checked{% endif %}>
+                            
+                             
                     </td>
                     <td>
                         <!-- telegram_notification_in, telegram_notification_sent -->
@@ -505,16 +533,7 @@
 
     <!-- broadcasts -->
     <h3>שידורים</h3>
-    <a href="{{tv.get_tv_display_demo_url}}" target="popup"
-        onclick="window.open('{{tv.get_tv_display_demo_url}}','popup','width=600,height=600'); return false;">
-        דף דמו (ללא שעות פתיחה וספירות)
-    </a>
-    <br>
-    <a href="{{tv.get_tv_display_demo_url_with_inactive}}" target="popup"
-        onclick="window.open('{{tv.get_tv_display_demo_url_with_inactive}}','popup','width=600,height=600'); return false;">
-        דף דמו (ללא שעות פתיחה, ספירות כולל לא פעילים)
-    </a>
-    <br>
+    
     <div class="current-playlist">
         <div class="current-broadcast-info" id="current-broadcast-info"></div>
         <table id="current-playlist-table">

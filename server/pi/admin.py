@@ -11,7 +11,7 @@ import json
 class PiDeviceAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_approved','image_tag', 'name','cec_hdmi_status','humanize_socket_status_updated_ago','device_id', 'tv_admin_link',)
     list_filter = ('device_id','name','cec_hdmi_status','socket_status_updated',)
-    actions = ['approve','reboot_device', 'hdmi_cec_off','hdmi_cec_on','relaunch_kiosk_browser','set_tv_url']
+    actions = ['approve','reboot_device', 'hdmi_cec_off','hdmi_cec_on','relaunch_kiosk_browser','set_tv_url','refresh_page','deploy','system_update',]
     
     
     def approve(self, request, queryset):
@@ -62,4 +62,29 @@ class PiDeviceAdmin(admin.ModelAdmin):
                 messages.add_message(request, messages.INFO, 'Set TV URL for %s (%d)' % (pi_device.name, pi_device.id))
             else:
                 messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (pi_device.name, pi_device.id))
+                
+    def refresh_page(self, request, queryset):
+        for pi_device in queryset:
+            res = pi_device.send_refresh_page()
+            if res:
+                messages.add_message(request, messages.INFO, 'Refreshed page for %s (%d)' % (pi_device.name, pi_device.id))
+            else:
+                messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (pi_device.name, pi_device.id))
+        pass
+    def deploy(self, request, queryset):
+        for pi_device in queryset:
+            res = pi_device.send_deploy()
+            if res:
+                messages.add_message(request, messages.INFO, 'Deployed %s (%d)' % (pi_device.name, pi_device.id))
+            else:
+                messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (pi_device.name, pi_device.id))
+        pass
+    def system_update(self, request, queryset):
+        for pi_device in queryset:
+            res = pi_device.send_system_update()
+            if res:
+                messages.add_message(request, messages.INFO, 'System update for %s (%d)' % (pi_device.name, pi_device.id))
+            else:
+                messages.add_message(request, messages.WARNING, 'Device %s (%d) is not connected' % (pi_device.name, pi_device.id))
+        pass
 admin.site.register(PiDevice, PiDeviceAdmin)

@@ -420,6 +420,7 @@ def tvs_detail_edit(request, id):
             active = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_active')
             order = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_order')
             master = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_master')
+            enable_countdown = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_enable_countdown')
             # existing_btv_id = existing_broadcasts_in_tvs_ids[existing_broadcasts_ids.index(existing_b_id)]
             # obj = tv.broadcasts.get(id=existing_b_id)
             # broadcast_id = existing_b_id
@@ -430,6 +431,7 @@ def tvs_detail_edit(request, id):
             obj.active = active == 'on'
             obj.order = int(order)
             obj.master = master == 'on'
+            obj.enable_countdown = enable_countdown == 'on'
             obj.save()
         tv.save()
     return redirect('dashboard_tvs_detail', id=id)

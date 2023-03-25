@@ -46,6 +46,24 @@ def send_relaunch_kiosk_browser_to_channel(channel_name):
         "type": "do_relaunch_kiosk_browser",
     })
 
+
+def send_refresh_page_to_channel(channel_name):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(channel_name, {
+        "type": "do_refresh_page",
+    })
+    
+def send_deploy_to_channel(channel_name):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(channel_name, {
+        "type": "do_deploy",
+    })
+def send_system_update_to_channel(channel_name):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(channel_name, {
+        "type": "do_system_update",
+    })
+
 class ChatConsumer(WebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
@@ -99,6 +117,28 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type': 'command',
             'command': 'relaunch_kiosk_browser'
+        }))
+        pass
+    
+    def do_refresh_page(self, event):
+        print('refresh_page')
+        self.send(text_data=json.dumps({
+            'type': 'command',
+            'command': 'refresh_page'
+        }))
+        pass
+    def do_deploy(self, event):
+        print('deploy')
+        self.send(text_data=json.dumps({
+            'type': 'command',
+            'command': 'deploy'
+        }))
+        pass
+    def do_system_update(self, event):
+        print('system_update')
+        self.send(text_data=json.dumps({
+            'type': 'command',
+            'command': 'system_update'
         }))
         pass
 
