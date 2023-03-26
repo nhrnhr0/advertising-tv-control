@@ -64,3 +64,8 @@ sudo supervisorctl reread
 sudo supervisorctl update
 
 sudo cp /home/ubuntu/advertising-tv-control/goldTvDjangoNginx.conf /etc/nginx/conf.d/
+
+
+
+# run celery on windows
+ celery -A server beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
