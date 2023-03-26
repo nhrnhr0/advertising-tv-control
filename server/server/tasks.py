@@ -7,12 +7,6 @@ from server.telegram_bot_interface import send_admin_message,edit_message_reply_
 import logging
 @celery_app.task
 def monitor_pi_devices():
-    # ALERT_THRESHOLD = 15 minutes
-    # create a random file on disk  
-    with open('monitor_pi_devices.txt', 'w') as f:
-        f.write('monitor_pi_devices')
-    
-    send_admin_message('monitor_pi_devices')
     ALERT_THRESHOLD = 60 * 15
     # print('='*20,'monitor_pi_devices','='*20)
     from pi.models import PiDevice
