@@ -83,6 +83,45 @@ class PiDevice(models.Model):
             print(e)
             return False
     
+    def send_refresh_page(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_refresh_page_to_channel
+                send_refresh_page_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    
+    def send_deploy(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_deploy_to_channel
+                send_deploy_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    
+    def send_system_update(self):
+        try:
+            if self.is_socket_connected_live():
+                channel_name = self.group_channel_name
+                from .consumers import send_system_update_to_channel
+                send_system_update_to_channel(channel_name)
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+    
     def send_hdmi_cec_off(self):
         try:
             if self.is_socket_connected_live():

@@ -165,7 +165,7 @@
                 </td>
                 <td>
                     <ul>
-                        {% for broad_in_tv in broadcast.broadcast_in_tv.all %}
+                        {% for broad_in_tv in broadcast.get_my_tvs_qs %}
                         <li>
                             <span>
                                 <a href="/dashboard/tvs/{{broad_in_tv.tv.id}}/" target="_blank">

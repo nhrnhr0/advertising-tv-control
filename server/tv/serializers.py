@@ -94,7 +94,10 @@ class TvSerializer(serializers.ModelSerializer):
         # if we need to show also hidden broadcasts, it's only demo to check the assests.
         if not include_inactive:
             queryset = queryset.filter(active=True)
-            queryset = queryset.filter(plays_left__gt=0)
+            # queryset = queryset.filter(Q(plays_left__gt=0) & Q(enable_countdown=True))
+            queryset = queryset.filter(Q(plays_left__gt=0) | Q(enable_countdown=False))
+
+            
         queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
         
         master_broadcasts = queryset.filter(master=True)

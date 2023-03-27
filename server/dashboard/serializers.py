@@ -12,7 +12,7 @@ class PublisherSerializer(serializers.ModelSerializer):
 class PublisherAssetsSerializer(serializers.ModelSerializer):
     def get_media_url(self, obj):
         return obj.media.url
-    publisher = PublisherSerializer(many=True)
+    # publisher = PublisherSerializer(many=True)
     class Meta:
         model = Broadcast
         fields = ('id', 'name','updated','created','media','media_type', 'publisher')

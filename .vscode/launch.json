@@ -4,14 +4,47 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [{
-        "name": "Python: Django",
-        "type": "python",
-        "request": "launch",
-        "program": "${workspaceFolder}\\server\\manage.py",
-        "args": [
-            "runserver", "8000", "--settings=server.settings.dev"
-        ],
-        "django": true,
-        "justMyCode": true
-    }]
+            "name": "Python: Django runserver",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\server\\manage.py",
+            "args": [
+                "runserver", "8000", "--settings=server.settings.dev"
+            ],
+            "django": true,
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Django makemigrations",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\server\\manage.py",
+            "args": [
+                "makemigrations", "--settings=server.settings.dev"
+            ],
+            "django": true,
+            "justMyCode": true
+        }, {
+            "name": "Python: Django migrate",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\server\\manage.py",
+            "args": [
+                "migrate", "--settings=server.settings.dev"
+            ],
+            "django": true,
+            "justMyCode": true
+
+        }, {
+            "name": "Python: Django shell",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}\\server\\manage.py",
+            "args": [
+                "shell", "--settings=server.settings.dev"
+            ],
+            "django": true,
+            "justMyCode": true
+        }
+    ]
 }

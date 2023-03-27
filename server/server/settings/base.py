@@ -27,6 +27,10 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
 
+LOGGING = {
+    'version': 1,
+}
+
 INSTALLED_APPS = [
     "channels",
     "pi",
@@ -43,15 +47,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'celery',
     'django_celery_beat',
-    'django_celery_results',
     'debug_toolbar',
     
     # own apps
     'core',
     'tv',
-    
-
-
+    'globalSettings',
 ]
 
 MIDDLEWARE = [

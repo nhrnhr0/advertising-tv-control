@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 # Create your views here.
 from core.models import Publisher
 from dashboard.serializers import PublisherAssetsSerializer
+from core.models import TvOpeningHours
 from tv.models import BroadcastInTv,Tv, Broadcast
 from tv.models import AdvertisingAgency
 from tv.models import BusinessType
@@ -23,7 +24,7 @@ def dashboard_publishers_view(request):
     
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
-    all_publishers = Publisher.objects.all()
+    all_publishers = Publisher.objects.all().prefetch_related('broadcasts').select_related('adv_agency')
     context = {
         'all_publishers': all_publishers
     }
@@ -226,6 +227,33 @@ def tvs_add_view(request):
         if not tv_name:
             return redirect('dashboard_tvs_view')
         tv = Tv.objects.create(name=tv_name)
+        
+        # get default opening hours and broadcasts
+        # from the first obj of GlobalSettings
+        from globalSettings.models import get_global_settings
+        globalSettings = get_global_settings()
+        if globalSettings:
+            openingHoursM2m = globalSettings.defult_opening_hours
+            for oh in openingHoursM2m.all():
+                obj = TvOpeningHours.objects.create(tv=tv, weekday=oh.weekday, from_hour=oh.from_hour, to_hour=oh.to_hour)
+                obj.save()
+            
+            
+            broadcastsM2m = globalSettings.defult_broadcasts
+            order = 0
+            for b in broadcastsM2m.all():
+                obj = BroadcastInTv.objects.create(tv=tv, broadcast=b, order=order, active=True,master=True,enable_countdown=False,plays_left=1)
+                obj.save()
+                order += 10
+        # set tv order (max order + 10)
+        from django.db.models import Max
+
+        max_order = Tv.objects.all().aggregate(Max('order'))['order__max']
+        if max_order:
+            tv.order = max_order + 10
+        else:
+            tv.order = 10
+            
         tv.save()
     return redirect('dashboard_tvs_view')
 
@@ -235,10 +263,10 @@ def tvs_detail(request, id):
     # from tv.models import Tv, BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
-    tv = Tv.objects.get(id=id)
+    tv = Tv.objects.select_related('pi').prefetch_related('buisness_types','broadcasts','broadcasts__broadcast_in_tv', 'opening_hours').get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
     # broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
-    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order')
+    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order').select_related('broadcast', 'tv').prefetch_related('broadcast__publisher')
 
     publishers = Publisher.objects.all()
     # broadcasts_paginator = Paginator(broadcasts, page_size)
@@ -420,6 +448,7 @@ def tvs_detail_edit(request, id):
             active = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_active')
             order = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_order')
             master = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_master')
+            enable_countdown = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_enable_countdown')
             # existing_btv_id = existing_broadcasts_in_tvs_ids[existing_broadcasts_ids.index(existing_b_id)]
             # obj = tv.broadcasts.get(id=existing_b_id)
             # broadcast_id = existing_b_id
@@ -430,6 +459,7 @@ def tvs_detail_edit(request, id):
             obj.active = active == 'on'
             obj.order = int(order)
             obj.master = master == 'on'
+            obj.enable_countdown = enable_countdown == 'on'
             obj.save()
         tv.save()
     return redirect('dashboard_tvs_detail', id=id)

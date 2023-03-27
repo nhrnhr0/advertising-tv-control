@@ -4,6 +4,7 @@ import os
 from celery.schedules import crontab
 from celery import Celery
 from django.conf import settings
+from server.telegram_bot_interface import init_bot # https://stackoverflow.com/questions/6791911/execute-code-when-django-starts-once-only
 #BASE_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', DJANGO_SETTINGS_MODULE)
@@ -45,3 +46,4 @@ def setup_periodic_tasks(sender, **kwargs):
 # def add(x, y):
 #     z = x + y
 #     print(z)
+init_bot()

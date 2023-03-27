@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 
 """
-from server.telegram_bot_interface import init_bot # https://stackoverflow.com/questions/6791911/execute-code-when-django-starts-once-only
+
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -47,4 +47,3 @@ if settings.DEBUG:
     urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))
 
 
-init_bot()

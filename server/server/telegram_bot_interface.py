@@ -15,7 +15,7 @@ def init_bot():
         
     except Exception as e:
         print(e)
-        bot_instance = None
+        bot_instance = 'error'
         pass
     
 def get_bot():
