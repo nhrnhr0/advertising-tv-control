@@ -245,6 +245,15 @@ def tvs_add_view(request):
                 obj = BroadcastInTv.objects.create(tv=tv, broadcast=b, order=order, active=True,master=True,enable_countdown=False,plays_left=1)
                 obj.save()
                 order += 10
+        # set tv order (max order + 10)
+        from django.db.models import Max
+
+        max_order = Tv.objects.all().aggregate(Max('order'))['order__max']
+        if max_order:
+            tv.order = max_order + 10
+        else:
+            tv.order = 10
+            
         tv.save()
     return redirect('dashboard_tvs_view')
 

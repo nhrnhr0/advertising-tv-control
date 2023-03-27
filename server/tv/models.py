@@ -23,6 +23,10 @@ class Broadcast(models.Model):
     history = JSONField(default=list, blank=True, null=True)
     deleted = models.BooleanField(default=False)
     publisher = models.ForeignKey('core.Publisher', on_delete=models.CASCADE, blank=True, null=True, related_name='broadcasts')
+
+    def get_my_tvs_qs(self):
+        return self.broadcast_in_tv.all().order_by('tv')
+    
     class Meta:
         ordering = ['-created',]
     def __str__(self):
@@ -152,8 +156,7 @@ class Tv(models.Model):
     uri_key = models.CharField(max_length=100, blank=True, null=True)
     order = models.IntegerField(default=0)
     class Meta:
-        ordering = ['order','-created',]
-        ordering = ['-created',]
+        ordering = ['-order','-created',]
     def get_location_json(self):
         return self.location or {}
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
