@@ -150,9 +150,9 @@ class Tv(models.Model):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
-    # order = models.IntegerField(default=0)
+    order = models.IntegerField(default=0)
     class Meta:
-        # ordering = ['order','-created',]
+        ordering = ['order','-created',]
         ordering = ['-created',]
     def get_location_json(self):
         return self.location or {}
