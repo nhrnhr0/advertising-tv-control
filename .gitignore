@@ -4,3 +4,4 @@ env_old
 __pycache__
 server/static/*
 server/server/settings/secrects.py
+celerybeat.pid
