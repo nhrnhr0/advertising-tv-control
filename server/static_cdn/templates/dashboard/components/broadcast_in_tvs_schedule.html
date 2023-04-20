@@ -1,0 +1,45 @@
+
+
+<!-- input with the choises:
+BROADCAST_SCHEDULE_TYPES = (('plays_countdown', 'ספירת שידורים לאחור'),
+                            ('between_dates', 'בין תאריכים'),
+                            ('manual_control', 'שליטה ידנית'))
+
+        when one is selected (can be non selected)
+        we choose how to render the rest of the option
+
+
+OrderedDict([('content_type', 'plays_countdown'), ('content', {'plays_left': 100, 'telegram_notification_in': 0, 'telegram_notification_sent': False})])
+ -->
+<select name="content_type" required="" id="id_content_type" onchange="content_type_changed">
+  <option value=" " {%if schedule.content_type == None %} selected {% endif %}="">---------</option>
+  <option value="plays_countdown"{%if schedule.content_type == "plays_countdown" %} selected {% endif %}>ספירת שידורים לאחור</option>
+  <option value="between_dates" {%if schedule.content_type == "between_dates" %} selected {% endif %}>בין תאריכים</option>
+  <option value="manual_control" {%if schedule.content_type == "manual_control" %} selected {% endif %}>שליטה ידנית</option>
+</select>
+{%if schedule.content_type == "plays_countdown" %}
+  <br>
+  <label for="plays_left">
+    נשאר:
+  </label>
+  <br>
+  <input type="number" name="plays_countdown_{{schedule.id}}" id="plays_countdown_{{schedule.id}}" value="{{schedule.content.plays_left}}" />
+{%elif schedule.content_type == "between_dates" %}
+  <br>
+  <!-- start_date, end_date -->
+  <label for="start_date"
+    name="start_date" id="start_date">
+    התחלה
+  </label>
+  <input type="datetime-local" value="{{schedule.content.start_date}}" />
+  <label for="end_date">
+    סיום
+  </label>
+  <input type="datetime-local" value="{{schedule.content.end_date}}" />
+{%endif%}
+
+<script>
+    function content_type_changed() {
+        
+    }
+</script>

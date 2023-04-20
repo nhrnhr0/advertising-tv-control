@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Tv, Broadcast,BroadcastInTv,playedBroadcast,BusinessType
+from .models import BetweenDateSchedule, BroadcastInTvs, BroadcastInTvsSchedule, ManualControlSchedule, PlaysCoutdownSchedule, Tv, Broadcast,BroadcastInTv,playedBroadcast,BusinessType
 
 class BroadcastInline(admin.TabularInline):
     model = Tv.broadcasts.through
@@ -26,6 +26,28 @@ class BroadcastInTvAdmin(admin.ModelAdmin):
     list_display = ('tv', 'broadcast', 'duration', 'created', 'updated',)
 admin.site.register(BroadcastInTv, BroadcastInTvAdmin)
 
+class BroadcastInTvsAdmin(admin.ModelAdmin):
+    list_display = ('id','broadcast','duration','created','updated', 'tvs_list')
+    def tvs_list(self, obj):
+        return ", ".join([tv.name for tv in obj.tvs.all()])
+admin.site.register(BroadcastInTvs, BroadcastInTvsAdmin)
+
+class BroadcastInTvsScheduleAdmin(admin.ModelAdmin):
+    list_display = ('id', )
+    pass
+admin.site.register(BroadcastInTvsSchedule, BroadcastInTvsScheduleAdmin)
+class PlaysCoutdownScheduleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'plays_left','telegram_notification_in','telegram_notification_sent',)
+    pass
+admin.site.register(PlaysCoutdownSchedule, PlaysCoutdownScheduleAdmin)
+class BetweenDateScheduleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'start_date', 'end_date', )
+    pass
+admin.site.register(BetweenDateSchedule, BetweenDateScheduleAdmin)
+class ManualControlScheduleAdmin(admin.ModelAdmin):
+    list_display = ('id', 'is_active_bool',)
+    pass
+admin.site.register(ManualControlSchedule, ManualControlScheduleAdmin)
 
 class playedBroadcastAdmin(admin.ModelAdmin):
     list_display = ('id','uuid','tv','broadcast','time','uri_key','is_approved')

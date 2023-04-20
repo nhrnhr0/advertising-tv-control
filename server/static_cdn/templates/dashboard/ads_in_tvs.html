@@ -1,0 +1,97 @@
+{% extends "dashboard/base.html" %} 
+
+
+{% block content %}
+<h2>
+    תשדירים בטלוויזיות
+</h2>
+<!-- link to add new broadcast in tvs -->
+<a href="/dashboard/ads-in-tvs/add/" class="btn btn-primary">הוסף תשדיר חדש</a>
+
+<!-- 
+
+    OrderedDict([('broadcast', 2), ('broadcast__name', 'WhatsApp Image 2023-03-20 at 08.44.08 (1).jpeg'), ('broadcast__media', '/media/broadcasts/WhatsApp_Image_2023-03-20_at_08.44.08_1_kjEyKVl.jpeg'), ('broadcast__media_type', 'image'), ('duration', 20.0), ('order', 10), ('updated', '2023-04-14T01:29:37.659876+03:00'), ('created', '2023-04-14T01:29:33.229301+03:00'), ('master', False), ('tvs_list', &lt;QuerySet [{'id': 1, 'name': 'tv1'}]&gt;)])
+
+    OrderedDict([('broadcast', 1), ('broadcast__name', 'WhatsApp Image 2023-03-20 at 08.50.33.jpeg'), ('broadcast__media', '/media/broadcasts/WhatsApp_Image_2023-03-20_at_08.50.33_icFdSkG.jpeg'), ('broadcast__media_type', 'image'), ('duration', 20.0), ('order', 20), ('updated', '2023-04-14T01:29:40.511571+03:00'), ('created', '2023-04-14T01:29:39.101464+03:00'), ('master', False), ('tvs_list', &lt;QuerySet [{'id': 1, 'name': 'tv1'}]&gt;)])
+ -->
+ <form action="" method="post">
+    {%csrf_token%}
+    <table >
+        <thead>
+            <th>
+                שידור
+            </th>
+            <th>
+                מאסטר
+            </th>
+            <th>
+                משך
+            </th>
+            <th>
+                טלוויזיות
+            </th>
+            <th>
+                לוח זמנים
+            </th>
+        </thead>
+        <tbody>
+            {% for b_in_tvs in broadcasts_in_tvs %}
+                <tr>
+                    <td>
+                        <!-- 16/9 -->
+                        <img src="{{b_in_tvs.broadcast__media}}" alt="{{b_in_tvs.broadcast__name}}" 
+                            width="177.777778px"
+                            height="100px"
+                            />
+                            <br>
+                            {{b_in_tvs.broadcast__name|truncatechars:22}}
+                    </td>
+                    
+                    <td>
+                        <input type="checkbox" name="b_in_tvs_{{b_in_tvs.id}}_master" id="b_in_tvs_{{b_in_tvs.id}}_master" {% if b_in_tvs.master %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <input type="number" name="b_in_tvs_{{b_in_tvs.id}}_duration" id="b_in_tvs_{{b_in_tvs.id}}_duration" value="{{b_in_tvs.duration}}" />
+                    </td>
+                    <td>
+                        <ul>
+                            {%for tv in b_in_tvs.tvs_list %}
+                                <li>
+                                    {{tv}}
+                                </li>
+                            {%endfor%}
+                        </ul>
+                    </td>
+                    <td>
+                        {% include "dashboard/components/broadcast_in_tvs_schedule.html" with schedule=b_in_tvs.activeSchedule %}
+                    </td>
+                </tr>
+            {%endfor%}
+        </tbody>
+    </table>
+    <div class="submit-button-wraper">
+        <input type="submit" value="שמור" class="submit-button">
+    </div>
+</form>
+<style>
+    .submit-button-wraper {
+        position: fixed;
+        bottom: 40px;
+        left: 40px;
+        
+    }
+    .submit-button {
+        width: 200px;
+        height: 50px;
+        background: #2d77e6;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1.2em;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+
+

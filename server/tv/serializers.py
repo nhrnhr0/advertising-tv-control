@@ -70,7 +70,7 @@ class TvSerializer(serializers.ModelSerializer):
         
     
     broadcasts = serializers.SerializerMethodField()
-    def get_broadcasts(self, obj):
+    def get_broadcasts(self, tv_obj):
         # old code
         # qset = BroadcastInTv.objects.select_related('tv', 'broadcast')
         # qset = qset.filter(tv=obj)
@@ -89,7 +89,7 @@ class TvSerializer(serializers.ModelSerializer):
 
         # new code:
         queryset = BroadcastInTv.objects.select_related('tv', 'broadcast')
-        queryset = queryset.filter(tv=obj)
+        queryset = queryset.filter(tv=tv_obj)
         include_inactive = self.context.get("include_inactive", False)
         # if we need to show also hidden broadcasts, it's only demo to check the assests.
         if not include_inactive:

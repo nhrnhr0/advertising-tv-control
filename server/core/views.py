@@ -4,6 +4,10 @@ from django.http import HttpResponse
 import json
 from pi.models import PiDevice
 from django.core.files.images import ImageFile
+from rest_framework.permissions import AllowAny
+
+from rest_framework.decorators import api_view, permission_classes
+
 import base64
 import io
 from datetime import datetime

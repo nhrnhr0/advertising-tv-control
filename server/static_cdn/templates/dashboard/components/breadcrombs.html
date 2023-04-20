@@ -27,4 +27,8 @@
             <a href="/dashboard/advertising-agency/{{agency.id}}/">{{agency.name}}</a>
         {% endif %}
     {% endif %}
+    {% if '/dashboard/ads-in-tvs/' in request.path %}
+        <span>></span>
+        <a href="/dashboard/ads-in-tvs/">תשדירים בטלוויזיות</a>
+    {% endif %}
 </div>

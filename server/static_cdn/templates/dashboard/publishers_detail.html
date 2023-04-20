@@ -520,10 +520,8 @@
             xhr.open('POST', '/dashboard/publishers/delete-broadcast');
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
             xhr.onload = function() {
-                debugger;
                 if (xhr.status === 200) {
                     // remove the broadcast from the page
-                    debugger;
                     window.location.reload();
                 } else {
                     alert('Request failed.  Returned status of ' + xhr.status);

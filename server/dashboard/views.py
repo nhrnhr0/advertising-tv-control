@@ -14,6 +14,12 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 import json
+from rest_framework.permissions import IsAdminUser
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from rest_framework import generics
+
+from rest_framework.response import Response
 
 def main_dashboard_view(request):
     if not request.user.is_authenticated or not request.user.is_superuser:
@@ -179,6 +185,13 @@ def dashboard_publishers_delete_broadcast(request):
 #     serializer = PublisherAssetsSerializer(broadcasts, many=True)
 #     data = serializer.data
 #     return JsonResponse(data, safe=False)
+class dashboard_get_all_broadcasts_search_api(generics.ListAPIView):
+    permission_classes = (IsAdminUser,)
+    filter_backends = [DjangoFilterBackend,filters.SearchFilter]
+    queryset = Broadcast.objects.all()
+    serializer_class = PublisherAssetsSerializer
+    pagination_class = PageNumberPagination
+    search_fields = ['name','media','media_type','publisher__name',]
 class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
     page_size = 10
     max_page_size = 1000

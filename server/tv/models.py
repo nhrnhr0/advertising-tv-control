@@ -51,6 +51,100 @@ class Broadcast(models.Model):
         return f'{FRONTEND_BASE_URL}/publisher/broadcast/{self.id}/demo'
 
 
+from polymorphic.models import PolymorphicModel
+
+BROADCAST_SCHEDULE_TYPES = (('plays_countdown', 'ספירת שידורים לאחור'),
+                            ('between_dates', 'בין תאריכים'),
+                            ('manual_control', 'שליטה ידנית'))
+BROADCAST_SCHEDULE_TYPES_DICT = dict(BROADCAST_SCHEDULE_TYPES)
+class BroadcastInTvsSchedule(PolymorphicModel):
+    content_type = models.CharField(choices=BROADCAST_SCHEDULE_TYPES, max_length=100)
+    # abstract methods:
+    def is_active(self):
+        pass
+    
+    def __str__(self) -> str:
+        return f'{BROADCAST_SCHEDULE_TYPES_DICT[self.content_type]}'
+    
+    def render_schedule(self):
+        
+        pass
+    pass
+
+    def get_data():
+        return {}
+
+class PlaysCoutdownSchedule(BroadcastInTvsSchedule):
+    plays_left = models.IntegerField(default=0)
+    telegram_notification_in = models.IntegerField(default=0)
+    telegram_notification_sent = models.BooleanField(default=False)
+    
+    def is_active(self):
+        return self.plays_left > 0
+    
+    def __str__(self) -> str:
+        return super().__str__() + f' {self.plays_left}'
+    pass
+
+    def get_data(self):
+        return {
+            'plays_left':self.plays_left,
+            'telegram_notification_in':self.telegram_notification_in,
+            'telegram_notification_sent':self.telegram_notification_sent,
+        }
+
+class BetweenDateSchedule(BroadcastInTvsSchedule):
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField()
+    telegram_notification_in = models.DateTimeField(null=True, blank=True)
+    telegram_notification_sent = models.BooleanField(default=False)
+    def is_active(self):
+        now = timezone.now()
+        if self.start_date != None:
+            import pytz
+            aware_start_date = self.start_date.replace(tzinfo=pytz.timezone(settings.TIME_ZONE))
+            aware_end_date = self.end_date.replace(tzinfo=pytz.timezone(settings.TIME_ZONE))
+            if aware_start_date < now and now < aware_end_date:
+                return True
+        elif self.end_date > now:
+            return True
+        return False
+    
+    def get_data(self):
+        return {
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+            'telegram_notification_in': self.telegram_notification_in,
+            'telegram_notification_sent': self.telegram_notification_sent,
+        }
+    pass
+    def __str__(self) -> str:
+        return super().__str__() + f' {self.start_date} - {self.end_date}'
+
+class ManualControlSchedule(BroadcastInTvsSchedule):
+    is_active_bool = models.BooleanField(default=False)
+    def is_active(self):
+        return self.is_active_bool
+
+    def __str__(self) -> str:
+        return super().__str__() + f' {self.is_active_bool}'
+    pass
+    def get_data(self):
+        return {
+            'is_active_bool':self.is_active_bool
+        }
+
+class BroadcastInTvs(models.Model):
+    tvs = models.ManyToManyField(to='Tv')
+    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE, related_name='broadcast_in_tvs')
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    duration = models.FloatField(default=20.0)
+    order = models.IntegerField(default=10)
+    master = models.BooleanField(default=False)
+    activeSchedule = models.ForeignKey(to=BroadcastInTvsSchedule, on_delete=models.SET_DEFAULT, default=None, null=True, blank=True, related_name='broadcast_in_tvs')
+    
+    pass
 class BroadcastInTv(models.Model):
     tv = models.ForeignKey('Tv', on_delete=models.CASCADE)
     broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE, related_name='broadcast_in_tv')
