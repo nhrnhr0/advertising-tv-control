@@ -59,9 +59,11 @@ BROADCAST_SCHEDULE_TYPES = (('plays_countdown', 'ספירת שידורים לא�
 BROADCAST_SCHEDULE_TYPES_DICT = dict(BROADCAST_SCHEDULE_TYPES)
 class BroadcastInTvsSchedule(PolymorphicModel):
     content_type = models.CharField(choices=BROADCAST_SCHEDULE_TYPES, max_length=100)
+    is_active_var = models.BooleanField(default=False)
     # abstract methods:
+    
     def is_active(self):
-        pass
+        return False
     
     def __str__(self) -> str:
         return f'{BROADCAST_SCHEDULE_TYPES_DICT[self.content_type]}'
@@ -73,6 +75,11 @@ class BroadcastInTvsSchedule(PolymorphicModel):
 
     def get_data():
         return {}
+    
+    # save: every save we set is_active_bool based on is_active()
+    def save(self, *args, **kwargs):
+        self.is_active_var = self.is_active()
+        return super().save(*args, **kwargs)
 
 class PlaysCoutdownSchedule(BroadcastInTvsSchedule):
     plays_left = models.IntegerField(default=0)
@@ -144,6 +151,8 @@ class BroadcastInTvs(models.Model):
     master = models.BooleanField(default=False)
     activeSchedule = models.ForeignKey(to=BroadcastInTvsSchedule, on_delete=models.SET_DEFAULT, default=None, null=True, blank=True, related_name='broadcast_in_tvs')
     
+    class Meta:
+        ordering = ['order', '-created',]
     pass
 class BroadcastInTv(models.Model):
     tv = models.ForeignKey('Tv', on_delete=models.CASCADE)

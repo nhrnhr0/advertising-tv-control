@@ -1,9 +1,19 @@
 
 
 from rest_framework import routers, serializers, viewsets
-from .models import Tv, Broadcast, BroadcastInTv
+from .models import Tv, Broadcast, BroadcastInTv, BroadcastInTvs
 from django.db.models import Q
 from django.conf import settings
+
+class BroadcastInTvsSerializer(serializers.ModelSerializer):
+    broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
+    broadcast__media = serializers.SerializerMethodField()
+    broadcast__media_type = serializers.CharField(source='broadcast.media_type', read_only=True)
+    def get_broadcast__media(self, obj):
+        return obj.broadcast.media.url
+    class Meta:
+        model = BroadcastInTvs
+        fields = ('id', 'broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type', 'duration', 'order', 'updated', 'created', 'master',)
 
 class BroadcastInTvSerializer(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
@@ -88,16 +98,17 @@ class TvSerializer(serializers.ModelSerializer):
         # then we pick all broadcasts that are active and have plays left and are master broadcasts, those need to appear as many times to fill the 10 minutes.
 
         # new code:
-        queryset = BroadcastInTv.objects.select_related('tv', 'broadcast')
-        queryset = queryset.filter(tv=tv_obj)
-        include_inactive = self.context.get("include_inactive", False)
+        queryset = BroadcastInTvs.objects.select_related('broadcast').prefetch_related('tvs',)
+        queryset = queryset.filter(tvs=tv_obj)
+        # include_inactive = self.context.get("include_inactive", False)
         # if we need to show also hidden broadcasts, it's only demo to check the assests.
-        if not include_inactive:
-            queryset = queryset.filter(active=True)
+        # if not include_inactive:
+            # queryset = queryset.filter(active=True)
             # queryset = queryset.filter(Q(plays_left__gt=0) & Q(enable_countdown=True))
-            queryset = queryset.filter(Q(plays_left__gt=0) | Q(enable_countdown=False))
-
-            
+            # queryset = queryset.filter(Q(plays_left__gt=0) | Q(enable_countdown=False))
+        # filter only activeSchedule exists and activeSchedule.is_active = True
+        queryset = queryset.filter(activeSchedule__isnull=False)
+        queryset = queryset.filter(activeSchedule__is_active_var=True)
         queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
         
         master_broadcasts = queryset.filter(master=True)
@@ -148,7 +159,7 @@ class TvSerializer(serializers.ModelSerializer):
         merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
 
 
-        serializer = BroadcastInTvSerializer(merge_broadcasts, many=True)
+        serializer = BroadcastInTvsSerializer(merge_broadcasts, many=True)
         return serializer.data
     class Meta:
         model = Tv

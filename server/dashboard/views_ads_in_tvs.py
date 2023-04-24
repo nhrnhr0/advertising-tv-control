@@ -34,27 +34,30 @@ from rest_framework.decorators import api_view, permission_classes
 
 class AdsInTvsListView(generics.ListAPIView):
     permission_classes = [IsAdminUser]
-    queryset = BroadcastInTvs.objects.all()
+    # queryset = BroadcastInTvs.objects.select_related('broadcast',).prefetch_related('tvs').all()
     serializer_class = BroadcastInTvsDashboardSerializers
     filter_backends = [DjangoFilterBackend,filters.SearchFilter]
     filterset_fields = ['broadcast__name','activeSchedule__content_type','broadcast__media_type','tvs__name','tvs__id']
     search_fields = ['broadcast__name','tvs__name','broadcast__media_type',]
+    def get_queryset(self):
+        queryset = BroadcastInTvs.objects.select_related('broadcast',).prefetch_related('tvs','activeSchedule')
+        return queryset
 
-
-@api_view(['GET', 'POST',])
+@api_view(['GET',])
 @permission_classes([IsAdminUser,])
 def adsInTvsDetailView(request, id): 
     if request.method == 'GET':
         broadcast_in_tvs = BroadcastInTvs.objects.get(id=id)
         serialiser = BroadcastInTvsDetailDashboardSerializers(broadcast_in_tvs)
         return Response(serialiser.data)
-    elif request.method == 'POST':
-        broadcast_in_tvs = BroadcastInTvs.objects.get(id=id)
-        serialiser = BroadcastInTvsDetailDashboardSerializers(broadcast_in_tvs, data=request.data)
-        if serialiser.is_valid():
-            serialiser.save()
-            return Response(serialiser.data)
-        return Response(serialiser.errors)
+    # elif request.method == 'POST':
+    #     pass
+        # broadcast_in_tvs = BroadcastInTvs.objects.get(id=id)
+        # serialiser = BroadcastInTvsDetailDashboardSerializers(broadcast_in_tvs, data=request.data)
+        # if serialiser.is_valid():
+        #     serialiser.save()
+        #     return Response(serialiser.data)
+        # return Response({'error': 'POST is not allowd'})
     
 @api_view(["GET",])
 @permission_classes([IsAdminUser])
@@ -92,6 +95,7 @@ def dashboard_update_active_schedule_to_brod_in_tvs(request, id):
     broadcast_in_tvs = BroadcastInTvs.objects.get(id=id)
     new_schedule = request.data.get('schedule')
     new_schedule = json.loads(new_schedule)
+    # if the activeSchedule is the same as the new_schedule we only update the fields
     if broadcast_in_tvs.activeSchedule and new_schedule.get('content_type') == broadcast_in_tvs.activeSchedule.content_type:
         # only update the values
         # plays_countdown
@@ -108,8 +112,9 @@ def dashboard_update_active_schedule_to_brod_in_tvs(request, id):
         elif broadcast_in_tvs.activeSchedule.content_type == 'plays_countdown':
             broadcast_in_tvs.activeSchedule.plays_left = broadcast_in_tvs.activeSchedule.plays_left + new_schedule.get('change_plays_left', 0)
         elif broadcast_in_tvs.activeSchedule.content_type == 'manual_control':
-            broadcast_in_tvs.activeSchedule.is_active_bool = new_schedule.get('is_active', False)
+            broadcast_in_tvs.activeSchedule.is_active_bool = new_schedule.get('content',{}).get('is_active', False)
         broadcast_in_tvs.activeSchedule.save()
+    # if the activeSchedule is not the same as the new_schedule we delete the old one and create a new one
     else:
         # delete the old schedule
         try: 

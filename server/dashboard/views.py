@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import generics
-
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 def main_dashboard_view(request):
@@ -185,13 +185,34 @@ def dashboard_publishers_delete_broadcast(request):
 #     serializer = PublisherAssetsSerializer(broadcasts, many=True)
 #     data = serializer.data
 #     return JsonResponse(data, safe=False)
+
+class SmallResultsSetPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+    
+
+
+
+@permission_classes([IsAdminUser])
+@api_view(['POST'])
+def dashboard_create_new_broadcast_in_tvs(request): 
+    from tv.models import BroadcastInTvs
+    if request.method == 'POST':
+        broadcast_id = request.POST.get('broadcast_id')
+        broadcast = Broadcast.objects.get(id=broadcast_id)
+        obj = BroadcastInTvs.objects.create(broadcast=broadcast)
+        obj.save()
+        return JsonResponse({'status': 'ok', 'id': obj.id})
+    pass
 class dashboard_get_all_broadcasts_search_api(generics.ListAPIView):
     permission_classes = (IsAdminUser,)
     filter_backends = [DjangoFilterBackend,filters.SearchFilter]
     queryset = Broadcast.objects.all()
     serializer_class = PublisherAssetsSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = SmallResultsSetPagination
     search_fields = ['name','media','media_type','publisher__name',]
+    page_size=3
 class dashboard_publishers_broadcasts_api(APIView, PageNumberPagination):
     page_size = 10
     max_page_size = 1000
