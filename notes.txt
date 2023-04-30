@@ -69,3 +69,21 @@ sudo cp /home/ubuntu/advertising-tv-control/goldTvDjangoNginx.conf /etc/nginx/co
 
 # run celery on windows
  celery -A server beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+
+
+
+
+# load database from file:
+sudo su postgres
+psql
+(enter password)
+DROP DATABASE kehiladb;
+CREATE DATABASE kehiladb;
+\q
+exit
+PGPASSWORD=<PASSWORD> psql -h localhost -d kehiladb -U djangouser -f <FILE>.sql
+
+
+
+
