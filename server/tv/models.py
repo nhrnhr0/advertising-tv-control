@@ -343,8 +343,8 @@ class Tv(models.Model):
 
 class playedBroadcast(models.Model):
     uuid = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    tv = models.ForeignKey(Tv, on_delete=models.CASCADE)
-    broadcast = models.ForeignKey(Broadcast, on_delete=models.CASCADE)
+    tv = models.ForeignKey(Tv, on_delete=models.SET_NULL, blank=True, null=True)
+    broadcast = models.ForeignKey(Broadcast, on_delete=models.SET_NULL, blank=True, null=True)
     time = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
