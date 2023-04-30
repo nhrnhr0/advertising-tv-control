@@ -24,8 +24,9 @@ from tv.views import get_publisher_assets_as_tv_demo
 from tv.views import save_broadcasts_played
 from django.contrib.auth import views as auth_views
 from core.views import pi_screenshot_view,telegram_webhook_view
-
+from rest_framework.authtoken.views import obtain_auth_token
 urlpatterns = [
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
     path("admin/", admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),
     path('tv/', include('tv.urls')),
