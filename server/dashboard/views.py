@@ -294,13 +294,15 @@ def tvs_add_view(request):
 from django.core.paginator import Paginator
 
 def tvs_detail(request, id):
+    from tv.models import BroadcastInTvs
     # from tv.models import Tv, BroadcastInTv
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.select_related('pi').prefetch_related('buisness_types','broadcasts','broadcasts__broadcast_in_tv', 'opening_hours').get(id=id)
     page_size = request.GET.get('page_size', settings.DEFAULT_PAGE_SIZE)
     # broadcasts = tv.broadcasts.all().order_by('broadcast_in_tv__order')
-    broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order').select_related('broadcast', 'tv').prefetch_related('broadcast__publisher')
+    # broadcasts_in_tv = BroadcastInTv.objects.filter(tv=tv).order_by('order').select_related('broadcast', 'tv').prefetch_related('broadcast__publisher')
+    broadcasts_in_tv = BroadcastInTvs.objects.filter(tvs=tv).order_by('order').select_related('broadcast',).prefetch_related('broadcast__publisher','tvs')
 
     publishers = Publisher.objects.all()
     # broadcasts_paginator = Paginator(broadcasts, page_size)
@@ -335,18 +337,16 @@ def tvs_detail_add_broadcast(request, id):
         if max_order == None:
             max_order = 0
         order = max_order + 10
-        qs =  BroadcastInTv.objects.filter(broadcast=broadcast, tv=tv)
-        if qs.exists():
-            b_in_tv_id = qs.first().id
-            update_broadcast_in_tv(b_in_tv_id, plays, price, note)
-        else:
-            
-            notify_in = (plays or 1) // 2
-            tv.broadcasts.add(broadcast, through_defaults={'plays_left': plays, 'active': False, 'order': order,'telegram_notification_in': notify_in,'telegram_notification_sent': False})
-            broadcast.history.append({'action':'add_to_tv', 'note':note, 'price':price, 'plays':plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
-            broadcast.save()
-        tv.save()
-    return HttpResponse('ok')
+        from tv.models import BroadcastInTvs,PlaysCoutdownSchedule,BROADCAST_SCHEDULE_TYPES
+        
+        sche = PlaysCoutdownSchedule.objects.create(plays_left=plays,telegram_notification_in=int(plays/2),telegram_notification_sent=False,content_type='plays_countdown',)
+
+        broadcast_in_tv = BroadcastInTvs.objects.create(broadcast=broadcast, order=order, activeSchedule=sche,master=False)
+        broadcast_in_tv.tvs.add(tv)
+        broadcast_in_tv.save()
+        broadcast.history.append({'user_id':request.user.id, 'action':'add_to_tv', 'note':note, 'price':price, 'plays':plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
+        broadcast.save()
+    return  HttpResponse('ok')
 
 def tvs_detail_delete_broadcast_in_tv(request, tv_id, broadcast_in_tv_id):
     # handle xhr request and retuern 200 ok or 400 bad request
@@ -354,11 +354,11 @@ def tvs_detail_delete_broadcast_in_tv(request, tv_id, broadcast_in_tv_id):
     if not request.user.is_authenticated or not request.user.is_superuser:
         return redirect('/admin/login/?next=' + request.path)
     tv = Tv.objects.get(id=tv_id)
-    broadcast_in_tv = BroadcastInTv.objects.get(id=broadcast_in_tv_id)
+    from tv.models import BroadcastInTvs
+    broadcast_in_tv = BroadcastInTvs.objects.get(id=broadcast_in_tv_id)
     broadcast = broadcast_in_tv.broadcast
-    plays = broadcast_in_tv.plays_left
     broadcast_in_tv.delete()
-    broadcast.history.append({'user_id':request.user.id, 'action':'delete_from_tv', 'note':'', 'price':'', 'plays':plays, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
+    broadcast.history.append({'user_id':request.user.id, 'action':'delete_from_tv', 'note':'', 'price':'', 'plays':0, 'tv_id':tv.id, 'tv_name':tv.name, 'time':timezone.now()})
     broadcast.save()
     return HttpResponse('ok')
 
@@ -479,21 +479,22 @@ def tvs_detail_edit(request, id):
         existing_broadcasts_in_tvs_ids = request.POST.getlist('existing_broadcasts_in_tvs_ids[]')
         for existing_broadcast_in_tv_id in existing_broadcasts_in_tvs_ids:
             duration = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_duration')
-            active = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_active')
+            #active = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_active')
             order = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_order')
             master = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_master')
-            enable_countdown = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_enable_countdown')
+            #enable_countdown = request.POST.get('b_in_tv_'+existing_broadcast_in_tv_id+'_enable_countdown')
             # existing_btv_id = existing_broadcasts_in_tvs_ids[existing_broadcasts_ids.index(existing_b_id)]
             # obj = tv.broadcasts.get(id=existing_b_id)
             # broadcast_id = existing_b_id
             # tv_id = id
-            obj = BroadcastInTv.objects.get(id=existing_broadcast_in_tv_id)
+            from tv.models import BroadcastInTvs
+            obj = BroadcastInTvs.objects.get(id=existing_broadcast_in_tv_id)
             # broad_in_tv = obj.broadcast_in_tv.first()
             obj.duration = float(duration)
-            obj.active = active == 'on'
+            # obj.active = active == 'on'
             obj.order = int(order)
             obj.master = master == 'on'
-            obj.enable_countdown = enable_countdown == 'on'
+            #obj.enable_countdown = enable_countdown == 'on'
             obj.save()
         tv.save()
     return redirect('dashboard_tvs_detail', id=id)

@@ -20,6 +20,7 @@ class BroadcastInTvsDashboardSerializers(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
     broadcast__media = serializers.SerializerMethodField()
     broadcast__media_type = serializers.CharField(source='broadcast.media_type', read_only=True)
+    broadcast__publisher__name = serializers.CharField(source='broadcast.publisher.name', read_only=True)
     # tvs_list = TvsSerializer(source='tvs', many=True, read_only=True)
     # tvs_list = serializers.SerializerMethodField()
     activeSchedule = ScheduleSerializer()
@@ -32,7 +33,7 @@ class BroadcastInTvsDashboardSerializers(serializers.ModelSerializer):
     #     return obj.tvs.all().values('id', 'name')
     class Meta:
         model = BroadcastInTvs
-        fields = ('id','broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','duration', 'order', 'updated', 'created','master','tvs_list', 'activeSchedule')
+        fields = ('id','broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type','broadcast__publisher__name','duration', 'order', 'updated', 'created','master','tvs_list', 'activeSchedule',)
         
 class BroadcastInTvsDetailDashboardSerializers(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)

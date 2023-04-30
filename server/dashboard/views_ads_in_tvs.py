@@ -37,10 +37,10 @@ class AdsInTvsListView(generics.ListAPIView):
     # queryset = BroadcastInTvs.objects.select_related('broadcast',).prefetch_related('tvs').all()
     serializer_class = BroadcastInTvsDashboardSerializers
     filter_backends = [DjangoFilterBackend,filters.SearchFilter]
-    filterset_fields = ['broadcast__name','activeSchedule__content_type','broadcast__media_type','tvs__name','tvs__id']
-    search_fields = ['broadcast__name','tvs__name','broadcast__media_type',]
+    filterset_fields = ['broadcast__name','activeSchedule__content_type','broadcast__media_type','tvs__name','tvs__id','broadcast__publisher__name',]
+    search_fields = ['broadcast__name','tvs__name','broadcast__media_type','broadcast__publisher__name',]
     def get_queryset(self):
-        queryset = BroadcastInTvs.objects.select_related('broadcast',).prefetch_related('tvs','activeSchedule')
+        queryset = BroadcastInTvs.objects.select_related('broadcast','broadcast__publisher',).prefetch_related('tvs','activeSchedule')
         return queryset
 
 @api_view(['GET',])
