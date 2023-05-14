@@ -68,8 +68,9 @@ def save_broadcasts_played(request):
         uri_key = data.get('key')
         added = 0
         for broadcast in broadcasts:
-            broadcast_id = broadcast['broadcast']
-            tv_display_id = broadcast['tv_display']
+            broadcast_id = broadcast.get('broadcast')
+            tv_display_id = broadcast.get('tv_display')
+            b_in_tvs_id = broadcast.get('b_in_tvs_id')
             try:
                 tv = Tv.objects.get(id=tv_display_id)
                 
@@ -92,20 +93,29 @@ def save_broadcasts_played(request):
                     obj = playedBroadcast.objects.create(broadcast_id=broadcast_id, tv_id=tv_display_id, time=time, uuid=uuid,uri_key=uri_key, is_approved=is_approved)
                     last_broadcast = obj
                     added += 1
-                    broadcast_in_tv = BroadcastInTv.objects.get(broadcast_id=broadcast_id, tv_id=tv_display_id)
-                    if is_approved:
-                        if broadcast_in_tv.enable_countdown:
-                            broadcast_in_tv.plays_left -= 1
-                            if broadcast_in_tv.plays_left <= 0:
-                                # broadcast_in_tv.plays_left = 0
-                                broadcast_in_tv.is_active = False
-                        if broadcast_in_tv.need_to_send_telegram_notification():
-                            broadcast_in_tv.send_telegram_notification()
-                        
-                        broadcast_in_tv.save()
                 except Exception as e:
+                    print('failed to add playedBroadcast')
                     print(e)
                     pass
+                try:
+                    from tv.models import BroadcastInTvs
+                    broadcast_in_tvs = BroadcastInTvs.objects.get(id=b_in_tvs_id)
+                    if is_approved:
+                        # if broadcast_in_tv.enable_countdown:
+                        #     broadcast_in_tv.plays_left -= 1
+                        #     if broadcast_in_tv.plays_left <= 0:
+                        #         # broadcast_in_tv.plays_left = 0
+                        #         broadcast_in_tv.is_active = False
+                        # if broadcast_in_tv.need_to_send_telegram_notification():
+                        #     broadcast_in_tv.send_telegram_notification()
+                        broadcast_in_tvs.activeSchedule.broadcast_played(time, tv)
+                        
+                        broadcast_in_tvs.save()
+                except Exception as e:
+                    print('failed to update broadcast_in_tvs')
+                    print(e)
+                    pass
+                
             except Exception as e:
                 print(e)
                 pass
