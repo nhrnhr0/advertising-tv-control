@@ -3,8 +3,8 @@ from .base import *
 DEBUG = True
 
 # CORS_ORIGIN_WHITELIST = ['http://localhost:5173',]
-ALLOWED_HOSTS = ['127.0.0.1', 'testing.boost-pop.com','office-testing.boost-pop.com','localhost']
-# CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'https://testing.boost-pop.com','https://office-testing.boost-pop.com',]
+ALLOWED_HOSTS = ['127.0.0.1', 'testing.boost-pop.com','office-testing.boost-pop.com','localhost', '*',]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5173', 'https://testing.boost-pop.com','https://office-testing.boost-pop.com','http://']
 
 
 CORS_ALLOW_ALL_ORIGINS = True # If this is used then `CORS_ALLOWED_ORIGINS` will not have any effect

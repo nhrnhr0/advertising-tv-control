@@ -50,7 +50,10 @@ class ManualControlScheduleAdmin(admin.ModelAdmin):
 admin.site.register(ManualControlSchedule, ManualControlScheduleAdmin)
 
 class playedBroadcastAdmin(admin.ModelAdmin):
-    list_display = ('id','uuid','tv','broadcast','time','uri_key','is_approved')
+    list_display = ('id','tv','broadcast','time','uri_key','is_approved')
+    list_filter = ('is_approved','broadcast__publisher','broadcast', 'tv', 'time',)
+    search_fields = ('tv__name','broadcast__name', 'broadcast__publisher__name', )
+    
 admin.site.register(playedBroadcast, playedBroadcastAdmin)
 
 

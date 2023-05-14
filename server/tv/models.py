@@ -61,6 +61,10 @@ class BroadcastInTvsSchedule(PolymorphicModel):
     content_type = models.CharField(choices=BROADCAST_SCHEDULE_TYPES, max_length=100)
     is_active_var = models.BooleanField(default=False)
     # abstract methods:
+    def broadcast_played(self, tv, broadcast):
+        # TODO: continue from here
+        print('broadcast_played, should be implemented in child class')
+        pass
     
     def is_active(self):
         return False
@@ -85,7 +89,18 @@ class PlaysCoutdownSchedule(BroadcastInTvsSchedule):
     plays_left = models.IntegerField(default=0)
     telegram_notification_in = models.IntegerField(default=0)
     telegram_notification_sent = models.BooleanField(default=False)
-    
+    def need_to_send_telegram_notification(self):
+        if self.plays_left <= self.telegram_notification_in and not self.telegram_notification_sent:
+            return True
+        return False
+    def broadcast_played(self, tv, broadcast):
+        self.plays_left -= 1
+        if self.need_to_send_telegram_notification():
+            self.send_telegram_notification()
+        self.save()
+    def send_telegram_notification(self):
+        # TODO: send telegram notification
+        return False
     def is_active(self):
         return self.plays_left > 0
     
@@ -116,6 +131,17 @@ class BetweenDateSchedule(BroadcastInTvsSchedule):
         elif self.end_date > now:
             return True
         return False
+    def need_to_send_telegram_notification(self):
+        # TODO: check that code
+        if self.end_date <= timezone.now() and not self.telegram_notification_sent:
+            return True
+        return False
+    def send_telegram_notification(self):
+        pass
+    def broadcast_played(self, tv, broadcast):
+        if self.need_to_send_telegram_notification():
+            self.send_telegram_notification()
+        pass
     
     def get_data(self):
         return {
@@ -136,6 +162,8 @@ class ManualControlSchedule(BroadcastInTvsSchedule):
     def __str__(self) -> str:
         return super().__str__() + f' {self.is_active_bool}'
     pass
+    def broadcast_played(self, tv, broadcast):
+        pass
     def get_data(self):
         return {
             'is_active_bool':self.is_active_bool
@@ -185,6 +213,7 @@ class BroadcastInTv(models.Model):
     class Meta:
         ordering = ['order', '-created',]
         
+    # unused code: TODO: remove it
     def need_to_send_telegram_notification(self):
         if self.plays_left <= self.telegram_notification_in and not self.telegram_notification_sent:
             return True
@@ -297,6 +326,9 @@ class Tv(models.Model):
         # 1 - sunday, 2 - monday, 3 - tuesday, 4 - wednesday, 5 - thursday, 6 - friday, 7 - saturday
         weekday = (now.weekday() + 2)%7
         # print('day: ', weekday, 'time: ', now.time())
+        # print(self.name, ' opening hours: ', self.opening_hours.count())
+        # for i in self.opening_hours.all():
+        #     print(i.weekday, i.from_hour, i.to_hour)
         if self.opening_hours.filter(weekday=weekday, from_hour__lte=now.time(), to_hour__gte=now.time()).exists():
             return True
         return False
@@ -342,7 +374,7 @@ class Tv(models.Model):
     pi__humanize_socket_status_updated_ago.short_description = 'last update'
 
 class playedBroadcast(models.Model):
-    uuid = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    uuid = models.CharField(max_length=100, blank=True, null=True,)
     tv = models.ForeignKey(Tv, on_delete=models.SET_NULL, blank=True, null=True)
     broadcast = models.ForeignKey(Broadcast, on_delete=models.SET_NULL, blank=True, null=True)
     time = models.DateTimeField(auto_now_add=True)
