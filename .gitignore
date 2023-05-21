@@ -5,3 +5,4 @@ __pycache__
 server/static/*
 server/server/settings/secrects.py
 celerybeat.pid
+*.sql

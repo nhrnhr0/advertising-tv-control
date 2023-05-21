@@ -13,7 +13,7 @@ class BroadcastInTvsSerializer(serializers.ModelSerializer):
         return obj.broadcast.media.url
     class Meta:
         model = BroadcastInTvs
-        fields = ('id', 'broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type', 'duration', 'order', 'updated', 'created', 'master',)
+        fields = ('id', 'broadcast','broadcast__name', 'broadcast__media', 'broadcast__media_type', 'duration', 'order', 'created', 'master',)
 
 class BroadcastInTvSerializer(serializers.ModelSerializer):
     broadcast__name = serializers.CharField(source='broadcast.name', read_only=True)
@@ -157,7 +157,7 @@ class TvSerializer(serializers.ModelSerializer):
         
         
         merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
-
+        
 
         serializer = BroadcastInTvsSerializer(merge_broadcasts, many=True)
         return serializer.data
