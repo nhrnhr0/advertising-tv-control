@@ -25,7 +25,7 @@ class PiDevice(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
     remote_last_image = models.ImageField(upload_to=image_path, blank=True, null=True)
     socket_status_updated = models.DateTimeField(null=True)
-    cec_hdmi_status = models.CharField(max_length=100, default='unknown')
+    cec_hdmi_status = models.TextField(default='unknown')
     group_channel_name = models.CharField(max_length=100, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
     telegram_connection_error_sent = models.BooleanField(default=False)
