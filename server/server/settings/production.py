@@ -5,8 +5,8 @@ from .base import *
 DEBUG = False
 
 ALLOWED_HOSTS = ['adv-tv-control.ms-global.co.il','adv-tv-control.boost-pop.com',]
-CSRF_TRUSTED_ORIGINS = ['https://adv-tv-control.ms-global.co.il',]
-CORS_ORIGIN_WHITELIST = ['https://adv-tv-control.ms-global.co.il',]
+CSRF_TRUSTED_ORIGINS = ['https://adv-tv-control.ms-global.co.il','https://kehilaton.ms-global.co.il',]
+CORS_ORIGIN_WHITELIST = ['https://adv-tv-control.ms-global.co.il','https://kehilaton.ms-global.co.il',]
 DATABASES = {
     "default": {
         "ENGINE": 'django.db.backends.postgresql_psycopg2',
