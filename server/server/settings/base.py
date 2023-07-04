@@ -145,3 +145,12 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 MAX_PLAYLIST_DURATION = 10 * 60
+
+
+# your_apps_settings.py
+CACHES = {
+    'default': {},
+    'cache-for-ratelimiting': {},
+}
+
+RATELIMIT_USE_CACHE = 'cache-for-ratelimiting'
