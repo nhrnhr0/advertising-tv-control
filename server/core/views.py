@@ -36,7 +36,7 @@ def pi_screenshot_view(request, pi_key):
                 obj.remote_last_image = image_file
                 obj.image_updated = time
         obj.socket_status_updated = time
-        obj.telegram_connection_error_sent = False # reset the error
+        # obj.telegram_connection_error_sent = False # reset the error
         obj.save()
         return HttpResponse('ok')
     return HttpResponse('ok2')

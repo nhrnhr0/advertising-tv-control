@@ -152,6 +152,7 @@ class ChatConsumer(WebsocketConsumer):
                 print("the keys", key, "and value", value)
                 setattr(tv_device, key, value)
             tv_device.save()
+            tv_device.socket_info_updated()
         # set the value
         self.pi_device = tv_device
         self.pi_device.save()
