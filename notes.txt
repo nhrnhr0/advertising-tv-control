@@ -45,6 +45,8 @@ exit exit
 
 pip3 install --upgrade pip
 sudo apt install python3.8-venv
+sudo apt install python3.8 python3.8-venv python3-venv
+
 git clone https://github.com/nhrnhr0/advertising-tv-control.git
 cd advertising-tv-control/
 git checkout prod
@@ -55,17 +57,24 @@ python3 -m venv env
 
 # install and set supervisorctl 
 # https://www.digitalocean.com/community/tutorials/how-to-install-and-manage-supervisor-on-ubuntu-and-debian-vps
-
+sudo apt update && sudo apt install supervisor
 sudo nano /etc/supervisor/conf.d/goldtv.conf
-copy the `goldtv.conf` to the file
-
+copy the `setup/adv_tv_nginx` to the file
+sudo apt-get -y install celery
+sudo mkdir /var/log/celery
 sudo mkdir /var/log/gunicorn
+sudo mkdir /run/daphne/
 sudo supervisorctl reread
 sudo supervisorctl update
 
+install certbot:
+https://certbot.eff.org/instructions?ws=nginx&os=ubuntufocal
+
 sudo cp /home/ubuntu/advertising-tv-control/goldTvDjangoNginx.conf /etc/nginx/conf.d/
 
-
+install redis:
+https://redis.io/docs/getting-started/installation/install-redis-on-linux/
+sudo apt-get install redis-server	
 
 # run celery on windows
  celery -A server beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
@@ -87,3 +96,11 @@ PGPASSWORD=<PASSWORD> psql -h localhost -d kehiladb -U djangouser -f <FILE>.sql
 
 
 
+
+docker cp .\kehiladb_04-06-2023-14_38_04.sql adv_tv_control_postgres:/tmp/db.sql
+docker exec -it adv_tv_control_postgres /bin/bash
+        psql -h localhost -U adv_tv_control
+        DROP DATABASE adv_tv_control;
+        CREATE DATABASE adv_tv_control;
+        \q
+PGPASSWORD=adv_tv_control psql -h localhost -U adv_tv_control -d adv_tv_control < /tmp/db.sql 

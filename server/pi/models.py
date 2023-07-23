@@ -1,9 +1,12 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
 import humanize
 from django.utils.safestring import mark_safe
 import os
+from server.tasks import ALERT_THRESHOLD
 import requests
+from server.telegram_bot_interface import send_admin_message
 
 
 # class SocketDeviceIds(models.Model):
@@ -41,6 +44,14 @@ class PiDevice(models.Model):
         return self.group_channel_name is not None
     is_socket_connected_live.short_description = 'socket connected'
     is_socket_connected_live.boolean = True
+    
+    def socket_info_updated(self):
+        # check if socket_status_updated is updated in the last ALERT_THRESHOLD seconds and if so and telegram_connection_error_sent = True then set it to False
+        if self.socket_status_updated < timezone.now() - timedelta(seconds=ALERT_THRESHOLD) and self.telegram_connection_error_sent:
+            self.telegram_connection_error_sent = False
+            # send alert
+            send_admin_message(f'🟢התקשורת עם המכשיר <b>{self.name}</b> חזר לעבוד כרגיל')
+            self.save()
     
     def __str__(self):
         return self.name or self.device_id

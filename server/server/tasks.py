@@ -5,9 +5,10 @@ from django.utils import timezone
 from datetime import timedelta
 from server.telegram_bot_interface import send_admin_message,edit_message_reply_markup
 import logging
+ALERT_THRESHOLD = 60 * 15
 @celery_app.task
 def monitor_pi_devices():
-    ALERT_THRESHOLD = 60 * 15
+    
     # print('='*20,'monitor_pi_devices','='*20)
     from pi.models import PiDevice
     qs = PiDevice.objects.filter(is_approved=True)
@@ -25,7 +26,7 @@ def monitor_pi_devices():
                         logging.info('send alert to admin %s', pi_device)
                         href += pi_device.tv.get_dashboard_url()
                         str_time = pi_device.socket_status_updated.strftime("%m/%d/%Y, %H:%M:%S")
-                        send_admin_message(f'🛑🛑🛑לא קיבלתי שום תקשורת מהמכשיר <b><a href="{href}">{pi_device.name}</a></b> ברבע שעה האחרונה\nעדכון אחרון שקיבלתי: <b>{str_time}</b>')
+                        send_admin_message(f'🛑לא קיבלתי תקשורת מהמכשיר <b><a href="{href}">{pi_device.name}</a></b> ברבע שעה האחרונה\nעדכון אחרון שקיבלתי: <b>{str_time}</b>')
                         
                         logging.info('send alert to admin %s', pi_device)
                         pi_device.telegram_connection_error_sent = True
@@ -33,7 +34,7 @@ def monitor_pi_devices():
                         pass
                 except:
                     pass
-                
+            
     # 
 # device_id
 # name

@@ -1,6 +1,8 @@
 
 
 from rest_framework import routers, serializers, viewsets
+
+from dashboard.ads_serialisers import OpeningHoursSerializer
 from .models import Tv, Broadcast, BroadcastInTv, BroadcastInTvs
 from django.db.models import Q
 from django.conf import settings
@@ -111,57 +113,61 @@ class TvSerializer(serializers.ModelSerializer):
         queryset = queryset.filter(activeSchedule__is_active_var=True)
         queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
         
-        master_broadcasts = queryset.filter(master=True)
-        publishers_broadcasts = queryset.filter(master=False)
+        # master_broadcasts = queryset.filter(master=True)
+        # publishers_broadcasts = queryset.filter(master=False)
         
-        # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
-        ret = []
-        ret_publishers_broadcasts = []
-        ret_masters_broadcasts = []
-        total_duration = 0
+        # # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
+        # ret = []
+        # ret_publishers_broadcasts = []
+        # ret_masters_broadcasts = []
+        # total_duration = 0
         
-        for broadcast in publishers_broadcasts:
-            # ret.append(broadcast)
-            ret_publishers_broadcasts.append(broadcast)
-            total_duration += broadcast.duration
-            if total_duration >= settings.MAX_PLAYLIST_DURATION:
-                break
+        # for broadcast in publishers_broadcasts:
+        #     # ret.append(broadcast)
+        #     ret_publishers_broadcasts.append(broadcast)
+        #     total_duration += broadcast.duration
+        #     if total_duration >= settings.MAX_PLAYLIST_DURATION:
+        #         break
         
-        i= 0
-        if len(master_broadcasts) != 0:
-            while total_duration < settings.MAX_PLAYLIST_DURATION:
-                broadcast = master_broadcasts[i % len(master_broadcasts)]
-                if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
-                    # we need to checked if there is a that is fitting in the remaining time or smaller.
-                    # if there is no broadcast that fits we need to break the loop.
-                    # if there is a broadcast that fits we need to add it and break the loop.
-                    for broadcast in master_broadcasts:
-                        if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
-                            ret_masters_broadcasts.append(broadcast)
-                            total_duration += broadcast.duration
-                            break
+        # i= 0
+        # if len(master_broadcasts) != 0:
+        #     while total_duration < settings.MAX_PLAYLIST_DURATION:
+        #         broadcast = master_broadcasts[i % len(master_broadcasts)]
+        #         if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
+        #             # we need to checked if there is a that is fitting in the remaining time or smaller.
+        #             # if there is no broadcast that fits we need to break the loop.
+        #             # if there is a broadcast that fits we need to add it and break the loop.
+        #             for broadcast in master_broadcasts:
+        #                 if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
+        #                     ret_masters_broadcasts.append(broadcast)
+        #                     total_duration += broadcast.duration
+        #                     break
                     
-                ret_masters_broadcasts.append(broadcast)
-                total_duration += broadcast.duration
-                i += 1
-            i=0
-            if total_duration > settings.MAX_PLAYLIST_DURATION:
-                ret_masters_broadcasts.pop()
-                total_duration -= broadcast.duration
-                res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-                if remaining != 0:
-                    ret_masters_broadcasts.pop()
-                    total_duration -= broadcast.duration
-                    res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-                ret_masters_broadcasts = res1
+        #         ret_masters_broadcasts.append(broadcast)
+        #         total_duration += broadcast.duration
+        #         i += 1
+        #     i=0
+        #     if total_duration > settings.MAX_PLAYLIST_DURATION:
+        #         ret_masters_broadcasts.pop()
+        #         total_duration -= broadcast.duration
+        #         res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+        #         if remaining != 0:
+        #             ret_masters_broadcasts.pop()
+        #             total_duration -= broadcast.duration
+        #             res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
+        #         ret_masters_broadcasts = res1
         
         
-        merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
+        # merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
         
 
-        serializer = BroadcastInTvsSerializer(merge_broadcasts, many=True)
+        serializer = BroadcastInTvsSerializer(queryset, many=True)
+        
+        
+            
         return serializer.data
+    opening_hours = OpeningHoursSerializer(many=True)
     class Meta:
         model = Tv
-        fields = ('id', 'name',  'updated', 'created', 'get_absolute_url','is_opening_hours_active','broadcasts',)
+        fields = ('id', 'name',  'updated', 'created', 'get_absolute_url','opening_hours','is_opening_hours_active','broadcasts',)
         # fields = '__all__'

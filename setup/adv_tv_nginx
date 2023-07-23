@@ -1,5 +1,9 @@
 upstream channels-backend {server localhost:8000;}
 
+limit_req_zone $binary_remote_addr zone=limitbyaddr:10m rate=5r/s;
+
+
+
 server {
     listen 80;
     server_name 18.223.66.10 adv-tv-control.ms-global.co.il;
@@ -11,6 +15,17 @@ server {
     location /media/ {
             autoindex on;
             alias /home/ubuntu/advertising-tv-control/server/static/media_root/;
+    }
+
+    location  ~ ^/(/admin/login|/api-token-auth/|/api-auth/)/ {
+        limit_req zone=limitbyaddr burst=10 delay=5;
+        proxy_pass http://channels-backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
     }
     location / {
             proxy_pass http://channels-backend;
