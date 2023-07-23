@@ -148,9 +148,12 @@ MAX_PLAYLIST_DURATION = 10 * 60
 
 
 # your_apps_settings.py
-CACHES = {
-    'default': {},
-    'cache-for-ratelimiting': {},
-}
+# CACHES = {
+#     'default': {
+#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379",
+#     },
+#     'cache-for-ratelimiting': {},
+# }
 
-RATELIMIT_USE_CACHE = 'cache-for-ratelimiting'
+# RATELIMIT_USE_CACHE = 'cache-for-ratelimiting'
