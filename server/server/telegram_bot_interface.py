@@ -36,4 +36,4 @@ def send_admin_message(message:str,parse_mode=ParseMode.HTML,reply_markup=None, 
         else:
             bot.send_message(chat_id=TELEGRAM_ADMIN_CHAT_ID, text=message,reply_markup=reply_markup,reply_to_message_id=reply_to_message_id,parse_mode=parse_mode)
     else:
-        print('bot not initialized')
+        print('bot not initialized', message)
