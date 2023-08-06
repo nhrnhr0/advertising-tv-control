@@ -58,116 +58,151 @@ def fill_with_master_broadcasts(master_broadcasts, ret, remaining_time, i):
     return ret, remaining_time
 
 
-class TvSerializer(serializers.ModelSerializer):
-    def merge_masters_and_publishers(publishers, masters):
-        # we have a list of publishers and masters broadcasts, the 2 together should be 10 minutes.
-        # we need to put the publishers equaly spaced in the 10 minutes (in the masters broadcasts).
-        
-        # first we need to devide the length of the masters broadcasts to the length of the publishers broadcasts.
-        # this will give us the number of masters broadcasts that we need to put between each publisher broadcast.
-        # we need to put the masters broadcasts in the middle of the publishers broadcasts.
-        if len(publishers) == 0:
-            return masters
-        num_of_masters = len(masters) // len(publishers) 
-        #  // is the integer division operator. (5//2 = 2)
 
-        ret = []
-        i = 0
-        for publisher in publishers:
-            ret.append(publisher)
-            for j in range(num_of_masters):
-                ret.append(masters[i])
-                i += 1
-        return ret
+
+# old TvSerializer ret:
+# {
+# "id": 20,
+# "name": "testing",
+# "updated": "2023-07-27T09:30:00.377716+03:00",
+# "created": "2023-07-26T15:12:32.444387+03:00",
+# "get_absolute_url": "/tv/20",
+# "opening_hours": [
+# {
+# "id": 144,
+# "weekday": 5,
+# "from_hour": "07:00:00",
+# "to_hour": "09:00:00"
+# },
+# {
+# "id": 145,
+# "weekday": 5,
+# "from_hour": "09:05:00",
+# "to_hour": "09:10:00"
+# },
+# {
+# "id": 146,
+# "weekday": 5,
+# "from_hour": "09:15:00",
+# "to_hour": "09:18:00"
+# },
+# {
+# "id": 147,
+# "weekday": 5,
+# "from_hour": "09:18:00",
+# "to_hour": "09:22:00"
+# },
+# {
+# "id": 148,
+# "weekday": 5,
+# "from_hour": "09:20:00",
+# "to_hour": "09:25:00"
+# },
+# {
+# "id": 149,
+# "weekday": 5,
+# "from_hour": "09:27:00",
+# "to_hour": "09:29:00"
+# },
+# {
+# "id": 150,
+# "weekday": 5,
+# "from_hour": "09:32:00",
+# "to_hour": "09:35:00"
+# }
+# ],
+# "is_opening_hours_active": false,
+# "broadcasts": [
+# {
+# "id": 122,
+# "broadcast": 46,
+# "broadcast__name": "סידרה מקצועית למראה תלתלים (1).jpg",
+# "broadcast__media": "/media/broadcasts/%D7%A1%D7%99%D7%93%D7%A8%D7%94_%D7%9E%D7%A7%D7%A6%D7%95%D7%A2%D7%99%D7%AA_%D7%9C%D7%9E%D7%A8%D7%90%D7%94_%D7%AA%D7%9C%D7%AA%D7%9C%D7%99%D7%9D_2.jpg",
+# "broadcast__media_type": "image",
+# "duration": 20,
+# "order": 10,
+# "created": "2023-06-08T00:21:49.771992+03:00",
+# "master": true
+# },
+# {
+# "id": 121,
+# "broadcast": 45,
+# "broadcast__name": "מעדני בשר גולייה.png",
+# "broadcast__media": "/media/broadcasts/%D7%9E%D7%A2%D7%93%D7%A0%D7%99_%D7%91%D7%A9%D7%A8_%D7%92%D7%95%D7%9C%D7%99%D7%99%D7%94.png",
+# "broadcast__media_type": "image",
+# "duration": 20,
+# "order": 10,
+# "created": "2023-06-08T00:21:00.682913+03:00",
+# "master": true
+# }
+# ]
+# }
+from django.db.models.query import QuerySet
+from tv.models import Tv, Spot
+import numpy as np
+
+class SpotSerializer(serializers.ModelSerializer):
+    def get_is_active(self, spot_obj):
+        return spot_obj.is_active()
+    
+    def get_assets(self, spot_obj):
+        return spot_obj.get_assets_serialize()
+    
+    def get_duration(self, spot_obj):
+        return spot_obj.get_duration()
+    
+    is_active = serializers.SerializerMethodField()
+    assets = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
+    class Meta:
+        model = Spot
+        fields = ('id','updated','created','is_active', 'is_filler', 'duration','assets')
+
+class TvSerializer(serializers.ModelSerializer):
+
         
     
     broadcasts = serializers.SerializerMethodField()
     def get_broadcasts(self, tv_obj):
-        # old code
-        # qset = BroadcastInTv.objects.select_related('tv', 'broadcast')
-        # qset = qset.filter(tv=obj)
-        # qset= qset.filter(active=True)
-        # qset = qset.filter(~Q(broadcast__media_type='unknown'))
-        # qset = qset.filter(plays_left__gt=0)
-        # qset = qset.order_by('order')
+        pass
+        # [{
+        # "id": 122,
+        # "broadcast": 46,
+        # "broadcast__name": "סידרה מקצועית למראה תלתלים (1).jpg",
+        # "broadcast__media": "/media/broadcasts/%D7%A1%D7%99%D7%93%D7%A8%D7%94_%D7%9E%D7%A7%D7%A6%D7%95%D7%A2%D7%99%D7%AA_%D7%9C%D7%9E%D7%A8%D7%90%D7%94_%D7%AA%D7%9C%D7%AA%D7%9C%D7%99%D7%9D_2.jpg",
+        # "broadcast__media_type": "image",
+        # "duration": 20,
+        # "order": 10,
+        # "created": "2023-06-08T00:21:49.771992+03:00",
+        # "master": true
+        # },
+        # {
+        # "id": 121,
+        # "broadcast": 45,
+        # "broadcast__name": "מעדני בשר גולייה.png",
+        # "broadcast__media": "/media/broadcasts/%D7%9E%D7%A2%D7%93%D7%A0%D7%99_%D7%91%D7%A9%D7%A8_%D7%92%D7%95%D7%9C%D7%99%D7%99%D7%94.png",
+        # "broadcast__media_type": "image",
+        # "duration": 20,
+        # "order": 10,
+        # "created": "2023-06-08T00:21:00.682913+03:00",
+        # "master": true
+        # }]
+        # active_spots = tv_obj.get_active_spots()
         
-        # instructions:
-        # we need to return a list of broadcasts of duration 10 minutes.
-        # broadcasts that are not active should not be returned at all.
-        # broadcasts that are active but have no plays left should not be returned as well.
-        # the media type of the broadcast should be known. (~Q(broadcast__media_type='unknown'))
-        # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
-        # then we pick all broadcasts that are active and have plays left and are master broadcasts, those need to appear as many times to fill the 10 minutes.
+        
+        # fillers = tv_obj.get_active_filler_spots()
+        # lcm, spots_list = tv_obj.get_loop_without_fillers()
+        # loop_time_in_secounds = lcm * 60
+        # loop = tv_obj.fill_loop(spots_list, fillers, loop_time_in_secounds)
+        loop = tv_obj.get_loop_with_fillers()
+        
+        data = SpotSerializer(loop, many=True).data
+        return data
+    
 
-        # new code:
-        queryset = BroadcastInTvs.objects.select_related('broadcast').prefetch_related('tvs',)
-        queryset = queryset.filter(tvs=tv_obj)
-        # include_inactive = self.context.get("include_inactive", False)
-        # if we need to show also hidden broadcasts, it's only demo to check the assests.
-        # if not include_inactive:
-            # queryset = queryset.filter(active=True)
-            # queryset = queryset.filter(Q(plays_left__gt=0) & Q(enable_countdown=True))
-            # queryset = queryset.filter(Q(plays_left__gt=0) | Q(enable_countdown=False))
-        # filter only activeSchedule exists and activeSchedule.is_active = True
-        queryset = queryset.filter(activeSchedule__isnull=False)
-        queryset = queryset.filter(activeSchedule__is_active_var=True)
-        queryset = queryset.filter(~Q(broadcast__media_type='unknown'))
-        
-        # master_broadcasts = queryset.filter(master=True)
-        # publishers_broadcasts = queryset.filter(master=False)
-        
-        # # first we pick all broadcasts that are active and have plays left and are not master broadcasts, those need to appear one time only.
-        # ret = []
-        # ret_publishers_broadcasts = []
-        # ret_masters_broadcasts = []
-        # total_duration = 0
-        
-        # for broadcast in publishers_broadcasts:
-        #     # ret.append(broadcast)
-        #     ret_publishers_broadcasts.append(broadcast)
-        #     total_duration += broadcast.duration
-        #     if total_duration >= settings.MAX_PLAYLIST_DURATION:
-        #         break
-        
-        # i= 0
-        # if len(master_broadcasts) != 0:
-        #     while total_duration < settings.MAX_PLAYLIST_DURATION:
-        #         broadcast = master_broadcasts[i % len(master_broadcasts)]
-        #         if total_duration + broadcast.duration > settings.MAX_PLAYLIST_DURATION:
-        #             # we need to checked if there is a that is fitting in the remaining time or smaller.
-        #             # if there is no broadcast that fits we need to break the loop.
-        #             # if there is a broadcast that fits we need to add it and break the loop.
-        #             for broadcast in master_broadcasts:
-        #                 if total_duration + broadcast.duration == settings.MAX_PLAYLIST_DURATION:
-        #                     ret_masters_broadcasts.append(broadcast)
-        #                     total_duration += broadcast.duration
-        #                     break
-                    
-        #         ret_masters_broadcasts.append(broadcast)
-        #         total_duration += broadcast.duration
-        #         i += 1
-        #     i=0
-        #     if total_duration > settings.MAX_PLAYLIST_DURATION:
-        #         ret_masters_broadcasts.pop()
-        #         total_duration -= broadcast.duration
-        #         res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-        #         if remaining != 0:
-        #             ret_masters_broadcasts.pop()
-        #             total_duration -= broadcast.duration
-        #             res1, remaining = fill_with_master_broadcasts(master_broadcasts, ret_masters_broadcasts, settings.MAX_PLAYLIST_DURATION - total_duration, i)
-        #         ret_masters_broadcasts = res1
-        
-        
-        # merge_broadcasts = TvSerializer.merge_masters_and_publishers(ret_publishers_broadcasts, ret_masters_broadcasts)
-        
 
-        serializer = BroadcastInTvsSerializer(queryset, many=True)
-        
-        
-            
-        return serializer.data
     opening_hours = OpeningHoursSerializer(many=True)
     class Meta:
         model = Tv
-        fields = ('id', 'name',  'updated', 'created', 'get_absolute_url','opening_hours','is_opening_hours_active','broadcasts',)
+        fields = ('id', 'name',  'updated', 'created', 'get_absolute_url','opening_hours','broadcasts',)
         # fields = '__all__'

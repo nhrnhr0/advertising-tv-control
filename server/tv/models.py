@@ -6,7 +6,7 @@ from django.utils import timezone
 from jsonfield import JSONField
 from django.conf import settings
 import json
-
+from django.db.models import Q
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from server.settings.secrects import FRONTEND_BASE_URL
 
@@ -263,6 +263,7 @@ class ContentWithHistory(models.Model):
     
     def __str__(self):
         return f'{self.content_type}: {self.content}'
+    
 
 # Create your models here.
 class Tv(models.Model):
@@ -304,6 +305,371 @@ class Tv(models.Model):
         return f"/tv/{self.id}"
     def __str__(self):
         return self.name
+    def get_active_spots(self, now=None):
+        # filter is_active_toggel=True and is_filler=False, and if there is start_at and end_at, check if now is in the range and priceing_plan is not null
+        if not now:
+            # set to now based on django timezone
+            now = timezone.now()
+        ret = self.spots.filter(Q(is_active_toggel=True) & Q(is_filler=False) & (Q(start_at__isnull=True) | Q(start_at__lte=now)) & (Q(end_at__isnull=True) | Q(end_at__gte=now)) & Q(priceing_plan__isnull=False))
+        return ret
+    def get_active_filler_spots(self, now=None):
+        # filter is_active_toggel=True and is_filler=True, and if there is start_at and end_at, check if now is in the range and priceing_plan can be null
+        if not now:
+            # set to now based on django timezone
+            now = timezone.now()
+        ret = self.spots.filter(Q(is_active_toggel=True) & Q(is_filler=True) & (Q(start_at__isnull=True) | Q(start_at__lte=now)) & (Q(end_at__isnull=True) | Q(end_at__gte=now)))
+        return ret
+    
+    def get_lcm_and_packs(self, spots):
+        if(len(spots) < 1):
+            return 10, []
+        import numpy as np
+        workday_minutes = 12 * 60
+        pack_list = list(spots.values_list('priceing_plan__name','priceing_plan__plays_per_day','priceing_plan__play_duration',).distinct())
+        # [(packing_name, plays_per_day, play_duration),...]
+        display_every_x_min_list = []
+        packs = []
+        for pack in pack_list:
+            val = int(workday_minutes / pack[1]) #  pack[1] = plays_per_day
+            # pack['display_every_x_min'] = val
+            display_every_x_min_list.append(val)
+            packs.append({
+                'name': pack[0],
+                'plays_per_day': pack[1],
+                'play_duration': pack[2],
+                'display_every_x_min': val,
+            })
+        
+        lcm = np.lcm.reduce(display_every_x_min_list)
+        
+        for pack in packs:
+            pack['multiplier'] = lcm // pack['display_every_x_min']
+            
+        
+        # create a fast access object for the packs
+        packs_dict = {}
+        for pack in packs:
+            packs_dict[pack['name']] = pack
+        return lcm, packs_dict
+    
+    def get_loop_without_fillers(self, spots = None):
+        if not spots:
+            spots = self.get_active_spots()
+        lcm, packs_dict = self.get_lcm_and_packs(spots)
+        # packs_dict = {pack['name']: pack for pack in packs}
+        loop = []
+        # iterate over the spots, and add them to the list according thir pack's multiplier
+        for spot in spots:
+            pack = packs_dict[spot.priceing_plan.name]
+            loop += [spot] * pack['multiplier']
+        print(loop)
+        return lcm, loop
+    
+    def get_loop_with_fillers(self, spots = None):
+        if not spots:
+            spots = self.get_active_spots()
+        # lcm, loop_without_fillers = self.get_loop_without_fillers(spots)
+        lcm, packs_dict = self.get_lcm_and_packs(spots)
+        wanted_loop_duration = lcm * 60
+        # get the fillers
+        fillers = self.get_active_filler_spots()
+        
+        current_loop_in_seconds = 0
+        for spot in spots:
+            pack = packs_dict[spot.priceing_plan.name]
+            current_loop_in_seconds += pack['play_duration'] * pack['multiplier']
+        
+        fillers_amount = self.get_fillers_amount(fillers, wanted_loop_duration - current_loop_in_seconds)
+        spot_id_to_spot = {}
+        amounts = {}
+        for filler in fillers:
+            amounts[filler.id] = fillers_amount[filler.id]
+            spot_id_to_spot[filler.id] = filler
+        
+        for spot in spots:
+            pack = packs_dict[spot.priceing_plan.name]
+            amounts[spot.id] = pack['multiplier']
+            spot_id_to_spot[spot.id] = spot
+        
+        print(amounts)
+        spots_ids_list = Tv.spread_spots(amounts)
+        print(spots_ids_list)
+        
+        ret = []
+        for spot_id in spots_ids_list:
+            ret.append(spot_id_to_spot[spot_id])
+        
+        return ret
+    def spread_spots(broadcasts):
+        # Example usage
+        # broadcasts = {'A': 10,'B':12, 'C':5, 'D': 2}
+        # spread_list = spread_spots(broadcasts) #['B', 'A', 'B', 'A', 'B', 'C', 'A', 'B', 'A', 'B', 'C', 'A', 'B', 'A', 'B', 'D', 'A', 'B', 'C', 'A', 'B', 'A', 'B', 'C', 'A', 'B', 'C', 'B', 'D']
+        # print(spread_list)
+        # print(len(spread_list))
+        broadcast_list = []
+        total_items = sum(broadcasts.values())
+
+        for key, value in broadcasts.items():
+            broadcasts[key] = {'amount': value, 'show_every_n': total_items / value, 'last_shown': total_items / value}
+        
+        # we sort the broadcasts by show_every_n
+        broadcasts = list(broadcasts.items())
+        done = False
+        last_inserted = None
+        while done == False:
+            # reorder based on amount
+            # broadcasts = list(sorted(broadcasts, key=lambda x: x[1]['amount']))
+            
+            # get the last_shown index with the lowest value that amount is not 0
+            min_last_shown = 100000
+            min_last_shown_index = 100000
+            min_last_shown_amount = -1
+            for i in range(len(broadcasts)):
+                if broadcasts[i][1]['amount'] != 0 and last_inserted != broadcasts[i][0]:
+                    if min_last_shown > broadcasts[i][1]['last_shown']:
+                        min_last_shown_amount = broadcasts[i][1]['amount']
+                        min_last_shown = broadcasts[i][1]['last_shown']
+                        min_last_shown_index = i
+                    elif min_last_shown == broadcasts[i][1]['last_shown'] and min_last_shown_amount < broadcasts[i][1]['amount']:
+                        min_last_shown_amount = broadcasts[i][1]['amount']
+                        min_last_shown = broadcasts[i][1]['last_shown']
+                        min_last_shown_index = i
+            if min_last_shown_index == 100000:
+                # find the first one that is not amount = 0
+                last_try = False
+                for i in range(len(broadcasts)):
+                    if broadcasts[i][1]['amount'] != 0:
+                        min_last_shown_index = i
+                        last_try = True
+                        break
+                if last_try == False:
+                    done = True
+                    break
+                
+            # print('inserting broadcast: ', broadcasts[min_last_shown_index][0])
+            # we add the broadcast to the list
+            broadcast_list.append(broadcasts[min_last_shown_index][0])
+            # we set the last_inserted to the current broadcast
+            last_inserted = broadcasts[min_last_shown_index][0]
+            # update the last_shown value of all the broadcasts except the current one
+            broadcasts[min_last_shown_index][1]['last_shown'] = broadcasts[min_last_shown_index][1]['show_every_n']
+            for i in range(len(broadcasts)):
+                # if i != min_last_shown_index:
+                broadcasts[i][1]['last_shown'] -= 1
+                if(broadcasts[i][1]['last_shown'] < 0):
+                    broadcasts[i][1]['last_shown'] = 0
+
+            # we decrease the amount of the broadcast
+            broadcasts[min_last_shown_index][1]['amount'] -= 1
+                
+
+        return broadcast_list
+            
+
+    
+
+    
+    def get_fillers_amount(self, fillers, max_duration):
+        l = self.fill_loop([],fillers, max_duration)
+        # iterate over the list and count the fillers
+        ret = {}
+        for spot in l:
+            if spot.id in ret:
+                ret[spot.id] += 1
+            else:
+                ret[spot.id] = 1
+        return ret
+    
+    def mix_loop(self, loop):
+        mixed_ids = Tv.rearrangeArray(loop, len(loop))
+        arr = list(Spot.objects.filter(id__in=mixed_ids))
+        spots_dict = {spot.id: spot for spot in arr}
+        loop2 = []
+        for id in mixed_ids:
+            loop2.append(spots_dict[id])
+        return loop2
+        pass
+    
+    
+    
+    
+    def conv(arr):
+        return arr.id
+    def rearrangeArray(arr, N) :
+        # Store frequencies of all elements
+        # of the array
+        conv = Tv.conv
+        mp = {}
+        visited = {}    
+        for i in range(N) :
+            if(conv(arr[i]) in mp) :
+                mp[conv(arr[i])] += 1
+            else :
+                mp[conv(arr[i])] = 1
+        
+        pq = []
+        
+        # Adding high freq elements
+        # in descending order
+        for i in range(N) :
+            val = conv(arr[i])
+            if((val in mp) and ((val not in visited) or (visited[val] != 1))) :
+                pq.append([mp[val], val])
+            visited[val] = 1   
+        pq.sort()
+        pq.reverse()
+        
+        # 'result[]' that will store resultant value
+        result = [0]*N
+        
+        # Work as the previous visited element
+        # initial previous element will be ( '-1' and
+        # it's frequency wiint also be '-1' )
+        prev = [-1, -1]
+        l = 0
+        
+        # Traverse queue
+        while (len(pq) != 0) :
+            
+            # Pop top element from queue and add it
+            # to result
+            k = pq[0]
+            pq.pop(0)
+            result[l] = k[1]
+            
+            # If frequency of previous element is less
+            # than zero that means it is useless, we
+            # need not to push it
+            if (prev[0] > 0) :
+            
+                pq.append(prev)
+                pq.sort()
+                pq.reverse()
+            
+            # Make current element as the previous
+            # decrease frequency by 'one'
+            prev = [k[0] - 1, k[1]]
+            l += 1
+            
+        for it in result :
+            if (it == 0) :
+                
+                # If found 0, No valid result
+                # array possible
+                print("Not valid Array")
+                return   
+        return result
+    def fill_loop(self, loop_without_fillers, fillers, max_duration):
+        total_duration = 0
+        loop = []
+        # we need to do the best try to fill the exact time of the loop (max_duration) with the fillers, try to make the fillers even
+        # so we will start with the fillers that have the smallest duration
+        
+        
+        # filler_index = 0
+        # fillers_added = 0
+        # while done == False:
+        #     iterate over the fillers, and add them to the loop until the loop is full
+        #     done_fillers = False
+        #     if total_duration == max_duration:
+        #         done = True
+        #     else if total_duration > max_duration:
+        #         while done_fillers == False:
+        #             # remove the last filler from the loop
+        #             # aall find_changes
+        #             # if found option, add it to the loop and done_fillers = True
+        #             # else remove the next filler from the loop and filler_index -= 1
+        #             # if no more fillers (fillers_added = 0), done_fillers = True # eage case: should not happen
+        #     else:
+        #         # add the next filler to the loop (filler_index % len(fillers))
+        #         # filler_index += 1
+        #         # fillers_added += 1
+        for item in loop_without_fillers:
+            total_duration += item.get_duration()
+            loop.append(item)
+        
+        filler_index = 0
+        fillers_added = 0
+        done = False
+        while done == False:
+            # iterate over the fillers, and add them to the loop until the loop is full
+            done_fillers = False
+            if total_duration == max_duration:
+                done = True
+            elif total_duration > max_duration:
+                while done_fillers == False:
+                    # remove the last filler from the loop
+                    item = loop.pop()
+                    total_duration -= item.get_duration()
+                    time_left_to_fill = max_duration - total_duration
+                    # aall find_changes
+                    tmp = Tv.find_changes(time_left_to_fill, fillers)
+                    # if found option, add it to the loop and done_fillers = True
+                    # else remove the next filler from the loop and filler_index -= 1
+                    # if no more fillers (fillers_added = 0), done_fillers = True # eage case: should not happen
+                    filler_index -= 1
+                    fillers_added -= 1
+                    if fillers_added == 0:
+                        done_fillers = True
+                        done = True
+            else:
+                # add the next filler to the loop (filler_index % len(fillers))
+                filler = fillers[filler_index % len(fillers)]
+                filler_duration = filler.get_duration()
+                total_duration += filler_duration
+                loop.append(filler)
+                filler_index += 1
+                fillers_added += 1
+        return loop
+        # we use find_changes to find all the possible combinations of fillers that can fill the loop
+        # all_options = Tv.find_changes(max_duration, fillers)
+        # print(all_options)
+    # def find_changes(n, coins):
+    #     print('find_changes', n, coins)
+    #     if n < 0:
+    #         return []
+    #     if n == 0:
+    #         return [[]]
+    #     all_changes = []
+
+    #     for last_used_coin in coins:
+    #         current_duration = last_used_coin.filler_duration or (last_used_coin.priceing_plan and last_used_coin.priceing_plan.duration)
+    #         combos = Tv.find_changes(n - current_duration, coins)
+    #         for combo in combos:
+    #             combo.append(last_used_coin)
+    #             all_changes.append(combo)
+
+    #     return all_changes
+    def find_changes(amount,coins):
+        # Dictionary to store memorized solutions for different amounts
+        memo = {}
+        
+        def helper(remaining_amount):
+            if remaining_amount == 0:
+                return [[]]  # Base case: One way to make zero amount - using no coins
+            
+            if remaining_amount < 0:
+                return []  # Base case: No way to make negative amount
+            
+            if remaining_amount in memo:
+                return memo[remaining_amount]
+            
+            all_solutions = []
+            
+            for coin in coins:
+                duration = coin.filler_duration or (coin.priceing_plan and coin.priceing_plan.duration)
+                sub_solutions = helper(remaining_amount - duration)
+                for solution in sub_solutions:
+                    new_solution = solution + [coin]
+                    all_solutions.append(new_solution)
+            
+            memo[remaining_amount] = all_solutions
+            return all_solutions
+        
+        ret=  helper(amount)
+        return ret
+        
+        pass
     def get_dashboard_url(self):
         return f"/dashboard/tvs/{self.id}/"
     def is_in_opening_hours(self,time):
@@ -400,3 +766,110 @@ class AdvertisingAgency(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.name
+    
+
+# new vertion to handle spots (broadcasts) in the tvs:
+# model PriceingPlan
+class PriceingPlen(models.Model):
+    name = models.CharField(max_length=100)
+    price = models.DecimalField(max_digits=10, decimal_places=0, default=0.0)
+    description = models.TextField(blank=True, null=True)
+    plays_per_day = models.IntegerField(default=0)
+    play_duration = models.IntegerField(default=0)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name
+    
+# new every spot can be made from multiple assets
+class Asset(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True, default='')
+    media = models.FileField(upload_to='assets/')
+    media_type = models.CharField(max_length=100, blank=True, null=True, default='')
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    
+    # on save if there is no name set the name to the file name, and if there is no media_type set it to the file extension
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.media.name.split('/')[-1]
+        if not self.media_type:
+            url = self.media.url
+            media_type = url.split('.')[-1].lower() # video/image
+            if media_type == 'mp4':
+                self.media_type = 'video'
+            elif media_type == 'jpg' or media_type == 'png' or media_type == 'jpeg' or media_type == 'svg' or media_type == 'webp' or media_type == 'gif':
+                self.media_type = 'image'
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return self.name
+    
+
+class Spot(models.Model):
+    is_active_toggel = models.BooleanField(default=False)
+    priceing_plan = models.ForeignKey(PriceingPlen, on_delete=models.SET_NULL, blank=True, null=True)
+    assets = models.ManyToManyField(Asset, blank=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    publisher = models.ForeignKey('core.Publisher', on_delete=models.SET_NULL, blank=True, null=True)
+    tvs = models.ManyToManyField(Tv, blank=True, related_name='spots')
+    
+    is_filler = models.BooleanField(default=False)
+    filler_duration = models.IntegerField(default=0)
+    
+    start_at = models.DateTimeField(blank=True, null=True)
+    end_at = models.DateTimeField(blank=True, null=True)
+    
+    def get_assets_serialize(self):
+        ret = []
+        for asset in self.assets.all():
+            ret.append({
+                'id': asset.id,
+                'name': asset.name,
+                'media': asset.media.url,
+                'media_type': asset.media_type,
+            })
+        return ret
+    
+    # is_active if is_active_toggel and start_at < now < end_at start_at and end_at are not required
+    def is_active(self):
+        ret = self.is_active_toggel and (not self.start_at or self.start_at < timezone.now()) and (not self.end_at or self.end_at > timezone.now())
+        # if it's not a filler we need to make sure it has a priceing_plan
+        if self.is_filler == False:
+            ret = ret and self.priceing_plan != None
+        return ret
+    is_active.boolean = True
+    def get_duration(self):
+        # if it's a filler we need to return the filler_duration else we need to return the priceing_plan.play_duration
+        if self.is_filler:
+            return self.filler_duration
+        else:
+            return self.priceing_plan.play_duration
+    def tvs_display(self):
+        ret = ""
+        ret += "<ol style='margin:0;padding:0;type=\"1\"'>"
+        for tv in self.tvs.all():
+            ret += "<li style='line-height:1;'><a href='/admin/tv/tv/{}/change/'>{}</a></li>".format(tv.id, tv.name)
+        ret += "</ol>"
+        return mark_safe(ret)
+    pass
+
+    def html_assets_display(self, w=88.888889, h=50):
+        ret = ""
+        ret += "<div style='display:grid;flex-wrap:wrap;grid-template-columns: repeat(auto-fill, minmax({w}px, 1fr));width:{div_width}px;'>".format(w=w,div_width=w*self.assets.count())
+        for asset in self.assets.all():
+            if asset.media_type == "video":
+                ret += '<video style="outline:1px solid #333;" width="{w}px" height="{h}px" controls><source src="{url}" type="video/mp4"></video>'.format(
+                url = asset.media.url,
+                w=w,
+                h=h
+                )
+            else:
+                ret += '<img style="outline:1px solid #333;" src="{url}" width="{w}px" height="{h}px" />'.format(
+                    url = asset.media.url,
+                    w=w,
+                    h=h
+                    )
+        ret += "</div>"
+        return mark_safe(ret)
