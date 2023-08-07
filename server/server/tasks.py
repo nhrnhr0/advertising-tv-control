@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from server.telegram_bot_interface import send_admin_message,edit_message_reply_markup
 import logging
-ALERT_THRESHOLD = 60 * 15
+ALERT_THRESHOLD = 60 * 15 # 15 minutes
 @celery_app.task
 def monitor_pi_devices():
     

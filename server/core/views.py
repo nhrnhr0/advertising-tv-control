@@ -5,12 +5,14 @@ import json
 from pi.models import PiDevice
 from django.core.files.images import ImageFile
 from rest_framework.permissions import AllowAny
+from django.conf import settings
 
 from rest_framework.decorators import api_view, permission_classes
 
 import base64
 import io
 from datetime import datetime
+import pytz
 # Create your views here.
 @csrf_exempt
 def pi_screenshot_view(request, pi_key):
@@ -18,7 +20,10 @@ def pi_screenshot_view(request, pi_key):
         time = request.POST.get('time')
         image = request.POST.get('image')
         hdmi_status = request.POST.get('hdmi_status')
-        time = datetime.fromtimestamp(int(float(time)))
+        # set the timezone to israel, only the timezone, not the time itself
+        time = datetime.fromtimestamp(int(float(time)), pytz.timezone(settings.TIME_ZONE))
+        
+        
         # get the object
         obj, created = PiDevice.objects.get_or_create(device_id=pi_key)
         obj.cec_hdmi_status = hdmi_status
@@ -37,7 +42,9 @@ def pi_screenshot_view(request, pi_key):
                 obj.image_updated = time
         obj.socket_status_updated = time
         # obj.telegram_connection_error_sent = False # reset the error
+        obj.socket_info_updated()
         obj.save()
+        
         return HttpResponse('ok')
     return HttpResponse('ok2')
 

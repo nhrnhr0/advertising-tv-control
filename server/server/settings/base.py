@@ -22,7 +22,7 @@ ROOT_URLCONF = "server.urls"
 ASGI_APPLICATION = "server.asgi.application"
 WSGI_APPLICATION = "server.wsgi.application"
 CELERY_BROKER_URL = 'redis://localhost:6379'
-
+TV_AVAREGE_WORKDAY_MINUTES = 60*12
 LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]

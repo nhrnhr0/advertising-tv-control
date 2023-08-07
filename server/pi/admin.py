@@ -12,7 +12,7 @@ class PiDeviceAdmin(admin.ModelAdmin):
     list_display = ('id', 'is_approved','image_tag', 'name','cec_hdmi_status','humanize_socket_status_updated_ago','device_id', 'tv_admin_link',)
     list_filter = ('device_id','name','cec_hdmi_status','socket_status_updated',)
     actions = ['approve','reboot_device', 'hdmi_cec_off','hdmi_cec_on','relaunch_kiosk_browser','set_tv_url','refresh_page','deploy','system_update',]
-    
+    search_fields = ('name','device_id',)
     
     def approve(self, request, queryset):
         queryset.update(is_approved=True)
