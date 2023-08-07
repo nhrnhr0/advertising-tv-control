@@ -409,7 +409,7 @@ class Tv(models.Model):
             ret+= "<div class='wraper' style=\"padding:5px;border: 1px solid red;\">"
             ret += spot.html_assets_display()
             ret += "<div class=\"text\">"
-            ret += f"{spot.name[0:10]} <br>"
+            ret += f"{spot.name[0:10] if spot.name else ''} <br>"
             ret += f"{spot.publisher.name} <br>"
             ret += f"{spot.get_duration()} שניות"
             ret+= "</div>"

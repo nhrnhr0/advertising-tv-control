@@ -209,11 +209,12 @@ class TvSerializer(serializers.ModelSerializer):
         fotters = tv_obj.get_tv_fotters()
         ret = []
         for f in fotters:
-            ret.append({
-                'title': f.title,
-                'image': f.image.url,
-                'index': f.get_image_index(),
-            })
+            if f:
+                ret.append({
+                    'title': f.title,
+                    'image': f.image.url,
+                    'index': f.get_image_index(),
+                })
         return ret
     fotters = serializers.SerializerMethodField()
     
