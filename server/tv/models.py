@@ -9,7 +9,6 @@ import json
 from django.db.models import Q
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from server.settings.secrects import FRONTEND_BASE_URL
-from django.db.models.signals import m2m_changed
 from server.telegram_bot_interface import send_admin_message
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from server.settings.secrects import BASE_MY_DOMAIN

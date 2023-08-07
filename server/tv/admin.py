@@ -105,13 +105,6 @@ class TvAdmin(admin.ModelAdmin):
     fields =('name','address','manual_turn_off','phone','email','contact_name','contact_phone','pi','updated','created','uri_key','order','spots_status','get_spots_display','get_filler_display',  'fotter_display',)
     readonly_fields = ('updated','created','fotter_display','get_tv_fotters_count','spots_status','get_spots_display','get_filler_display',)
     
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
-        # ('spots','spots__priceing_plan','spots__assets',)
-        qs = super().get_queryset(request)
-        qs = qs.prefetch_related('spots','spots__priceing_plan','spots__assets','pi')
-        return qs
-        
-    
     def spots_status(self, obj):
         ret = "<div>"
         data = obj.calculate_spots_status()
