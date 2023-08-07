@@ -9,7 +9,7 @@ import json
 from django.db.models import Q
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from server.settings.secrects import FRONTEND_BASE_URL
-
+from django.db.models.signals import m2m_changed
 from server.telegram_bot_interface import send_admin_message
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from server.settings.secrects import BASE_MY_DOMAIN
@@ -356,11 +356,24 @@ class Tv(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
     order = models.IntegerField(default=0)
-    
     class Meta:
         ordering = ['-order','-created',]
     def get_location_json(self):
         return self.location or {}
+    
+    def get_loop_prc(self, spots=None):
+        if not spots:
+            spots = self.get_active_spots()
+        total_secounds_per_day = settings.TV_AVAREGE_WORKDAY_MINUTES * 60
+        # get the total secounds of the spots
+        spots_secounds = 0
+        for spot in spots:
+            if spot.priceing_plan:
+                spots_secounds += spot.priceing_plan.secounds_per_day
+            else:
+                print(f'no priceing_plan for spot {spot.id} - {spot.name}')
+        loop_full_prc = spots_secounds / total_secounds_per_day * 100
+        return loop_full_prc
     # every tv need to keep track of the url visitors. seposed to be only one visitor per tv (this is the busines place) but cloud be more incase someone else go to the url
     # so also keep log, and track of the user's device info
     # pings_log = models.ManyToManyField('PingLog', related_name='pings_log', blank=True)
@@ -369,6 +382,69 @@ class Tv(models.Model):
         return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo"
     def get_tv_display_demo_url_with_inactive(self):
         return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo?inactive=true"
+    
+    def get_filler_display(self):
+        fillers = self.get_active_filler_spots()
+        ret = 'כמות שידורים: ' + str(len(fillers))
+        ret += "<div style='width: 100%;overflow-x: auto;display: flex;flex-direction:row;'>"
+        for spot in fillers:
+            ret+= "<div class='wraper' style=\"padding:5px;border: 1px solid red;\">"
+            ret += spot.html_assets_display()
+            ret += "<div class=\"text\">"
+            ret += f"{spot.name[0:10]} <br>"
+            ret += f"{spot.publisher.name} <br>"
+            ret += f"{spot.get_duration()} שניות"
+            ret+= "</div>"
+            ret+= "</div>"
+        ret += "</div>"
+        # edit active spots link:
+        # /admin/tv/spot/?is_filler__exact=1&tvs__id__exact=<tv_id>
+        ret += f"<a href='/admin/tv/spot/?is_filler__exact=1&tvs__id__exact={self.id}' target='_blank'>ערוך פילרים</a>"
+
+        return mark_safe(ret)
+    def get_spots_display(self):
+        spots = self.get_active_spots()
+        ret = 'כמות שידורים: ' + str(len(spots))
+        ret += "<div style='width: 100%;overflow-x: auto;display: flex;flex-direction:row;'>"
+        for spot in spots:
+            ret+= "<div class='wraper' style=\"padding:5px;border: 1px solid red;\">"
+            ret += spot.html_assets_display()
+            ret += "<div class=\"text\">"
+            ret += f"{spot.name[0:10]} <br>"
+            ret += f"{spot.publisher.name} <br>"
+            ret += f"{spot.get_duration()} שניות"
+            ret+= "</div>"
+            ret+= "</div>"
+        
+        ret += "</div>"
+        # edit active spots link:
+        # /admin/tv/spot/?is_filler__exact=0&tvs__id__exact=<tv_id>
+        ret += f"<a href='/admin/tv/spot/?is_filler__exact=0&tvs__id__exact={self.id}'>ערוך שידורים</a>"
+        return mark_safe(ret)
+    
+    def calculate_spots_status(self):
+        # ret = {'loop_full_prc':,'spots':[], 'fillers':[], 'space_left':}
+        # for every active spot, there is a pricing_plan, and for every pricing_plan there is a secounds_per_day property
+        # the loop is full at 12 hours (12*60*60=43200) 
+        # loop_full_prc = the loop is full in % (100% is 12 hours) based on the spots that are active
+        # spots = the spots that are active
+        # fillers = the fillers that are active
+        # space_left = the space left in the loop in secounds
+
+        # init:
+        # get all the active spots for this tv
+        spots = self.get_active_spots()
+        fillers = self.get_active_filler_spots()
+        # get the total secounds of the loop
+        total_secounds_per_day = settings.TV_AVAREGE_WORKDAY_MINUTES * 60
+        loop_full_prc = self.get_loop_prc()
+        return {
+            'loop_full_prc':loop_full_prc,
+            'spots':spots,
+            'fillers':fillers,
+        }
+
+        pass
     
     def get_tv_fotters(self):
         # queryset.filter(Q(end_date__isnull=True) | Q(end_date__gte=timezone.now()))
@@ -398,6 +474,8 @@ class Tv(models.Model):
             now = timezone.now()
         ret = self.spots.filter(Q(is_active_toggel=True) & Q(is_filler=False) & (Q(start_at__isnull=True) | Q(start_at__lte=now)) & (Q(end_at__isnull=True) | Q(end_at__gte=now)) & Q(priceing_plan__isnull=False))
         return ret
+    def get_active_spots_count(self, now=None):
+        return self.get_active_spots(now).count()
     def get_active_filler_spots(self, now=None):
         # filter is_active_toggel=True and is_filler=True, and if there is start_at and end_at, check if now is in the range and priceing_plan can be null
         if not now:
@@ -410,7 +488,7 @@ class Tv(models.Model):
         if(len(spots) < 1):
             return 10, []
         import numpy as np
-        workday_minutes = 12 * 60
+        workday_minutes = settings.TV_AVAREGE_WORKDAY_MINUTES
         pack_list = list(spots.values_list('priceing_plan__name','priceing_plan__plays_per_day','priceing_plan__play_duration',).distinct())
         # [(packing_name, plays_per_day, play_duration),...]
         display_every_x_min_list = []
@@ -864,6 +942,7 @@ class PriceingPlen(models.Model):
     play_duration = models.IntegerField(default=0)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    secounds_per_day = property(lambda self: self.plays_per_day * self.play_duration)
     def __str__(self):
         return self.name
     
@@ -893,12 +972,13 @@ class Asset(models.Model):
     
 
 class Spot(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True, default='')
     is_active_toggel = models.BooleanField(default=False)
     priceing_plan = models.ForeignKey(PriceingPlen, on_delete=models.SET_NULL, blank=True, null=True)
     assets = models.ManyToManyField(Asset, blank=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    publisher = models.ForeignKey('core.Publisher', on_delete=models.SET_NULL, blank=True, null=True)
+    publisher = models.ForeignKey('core.Publisher', on_delete=models.CASCADE,)
     tvs = models.ManyToManyField(Tv, blank=True, related_name='spots')
     
     is_filler = models.BooleanField(default=False)
@@ -906,6 +986,13 @@ class Spot(models.Model):
     
     start_at = models.DateTimeField(blank=True, null=True)
     end_at = models.DateTimeField(blank=True, null=True)
+    
+    def save(self, *args, **kwargs):
+        # if name is not set and we have assets set the name to the first asset name
+        # if self.id and not self.name and self.assets.count() > 0:   
+        #     n = self.assets.first().name
+        #     self.name = n
+        super().save(*args, **kwargs)
     
     def get_assets_serialize(self):
         ret = []

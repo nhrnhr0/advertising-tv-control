@@ -97,13 +97,33 @@ class openingHoursInline(admin.TabularInline):
 
 # Tv admin
 class TvAdmin(admin.ModelAdmin):
-    list_display = ('id','name','get_tv_fotters_count', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__humanize_socket_status_updated_ago','order',)
-    list_editable = ('order',)
+    list_display = ('id','name', 'created', 'updated','pi_admin_link','pi__humanize_socket_status_updated_ago','spots_status','get_tv_fotters_count')
+    list_editable = ()
     autocomplete_fields = ('pi',)
     search_fields = ('name','address','phone','email','contact_name','contact_phone','pi__name',)
     
-    fields =('name','address','manual_turn_off','phone','email','contact_name','contact_phone','pi','updated','created','uri_key','order', 'fotter_display',)
-    readonly_fields = ('updated','created','fotter_display','get_tv_fotters_count',)
+    fields =('name','address','manual_turn_off','phone','email','contact_name','contact_phone','pi','updated','created','uri_key','order','spots_status','get_spots_display','get_filler_display',  'fotter_display',)
+    readonly_fields = ('updated','created','fotter_display','get_tv_fotters_count','spots_status','get_spots_display','get_filler_display',)
+    
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
+        # ('spots','spots__priceing_plan','spots__assets',)
+        qs = super().get_queryset(request)
+        qs = qs.prefetch_related('spots','spots__priceing_plan','spots__assets','pi')
+        return qs
+        
+    
+    def spots_status(self, obj):
+        ret = "<div>"
+        data = obj.calculate_spots_status()
+        prc = "{:.2f}".format(data['loop_full_prc'])
+        # אחוז מלא מהלופ
+        ret += f"מפרסמים פעילים: {len(data['spots'])}<br>"
+        ret += f"פילרים: {len(data['fillers'])}<br>"
+        ret += f"<progress value=\"{prc}\" max=\"100\"></progress><br>"
+        ret += f"{prc}% מהלופ מלא <br>"
+        ret += f"</div>"
+        return mark_safe(ret)
+        pass
     
     def fotter_display(self, obj):
         ret = "<div style='width: 100%;overflow-x: auto;display: flex;flex-direction:row;'>"
@@ -182,13 +202,13 @@ admin.site.register(BusinessType, BusinessTypeAdmin)
 
 from .models import PriceingPlen, Asset, Spot
 class PriceingPlenAdmin(admin.ModelAdmin):
-    list_display = ('name','price','description','plays_per_day','play_duration',)
+    list_display = ('id', 'name','price','description','plays_per_day','play_duration','secounds_per_day','updated','created',)
     search_fields = ('name','description','price', 'plays_per_day', 'play_duration',)
 
     pass
 admin.site.register(PriceingPlen, PriceingPlenAdmin)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('name','media_display','media_type','updated','created',)
+    list_display = ('id', 'name','media_display','media_type','updated','created',)
     search_fields = ('name','media_type',)
     def media_display(self, obj):
         if obj.media_type == "video":
@@ -206,21 +226,38 @@ class NewAssetsInline(admin.TabularInline):
     model = Spot.assets.through
     extra = 3
 class SpotAdmin(admin.ModelAdmin):
-    list_display = ('id','is_active','start_at','end_at','priceing_plan', 'tvs_display','is_filler_admin_display','publisher','html_assets_display')
+    list_display = ('id','name', 'is_active','priceing_plan', 'tvs_display','is_filler_admin_display','publisher','html_assets_display','start_at','end_at',)
     list_filter = ('publisher','priceing_plan','is_filler','tvs',)
     filter_horizontal = ('tvs',)
-    fields = ('is_active','is_active_toggel','start_at','end_at','priceing_plan', 'publisher','is_filler','filler_duration','tvs','html_assets_display',)
+    fields = ('name','is_active','is_active_toggel','start_at','end_at','priceing_plan', 'publisher','is_filler','filler_duration','tvs','html_assets_display',)
     readonly_fields = ('html_assets_display','is_active', 'tvs_display','is_active')
     inlines = [NewAssetsInline,]
     autocomplete_fields = ('priceing_plan','publisher',)
     search_fields = ('publisher__name','priceing_plan__name','tvs__name', 'assets__name',)
+    actions = ['make_active', 'make_inactive', 'make_filler', 'make_not_filler']
+    
+    def make_active(self, request, queryset):
+        queryset.update(is_active_toggel=True)
+    make_active.short_description = "הפוך לפעיל"
+
+    def make_inactive(self, request, queryset):
+        queryset.update(is_active_toggel=False)
+    make_inactive.short_description = "הפוך ללא פעיל"
+    
+    def make_filler(self, request, queryset):
+        queryset.update(is_filler=True)
+    make_filler.short_description = "הפוך לפילר"
+    
+    def make_not_filler(self, request, queryset):
+        queryset.update(is_filler=False)
+    make_not_filler.short_description = "הפוך ללא פילר"
     
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         return super().get_queryset(request).prefetch_related('assets','tvs').select_related('priceing_plan','publisher')
     
     def is_filler_admin_display(self, obj):
         return 'FILLER (' + str(obj.get_duration()) + ')' if obj.is_filler else ''
-    
+    is_filler_admin_display.short_description = 'is_filler'
     
     
     

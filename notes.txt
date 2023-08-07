@@ -100,6 +100,7 @@ PGPASSWORD=<PASSWORD> psql -h localhost -d kehiladb -U djangouser -f <FILE>.sql
 docker cp .\kehiladb_04-06-2023-14_38_04.sql adv_tv_control_postgres:/tmp/db.sql
 docker exec -it adv_tv_control_postgres /bin/bash
         psql -h localhost -U adv_tv_control
+		\c postgres
         DROP DATABASE adv_tv_control;
         CREATE DATABASE adv_tv_control;
         \q
