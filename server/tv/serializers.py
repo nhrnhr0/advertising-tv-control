@@ -158,6 +158,8 @@ class SpotSerializer(serializers.ModelSerializer):
         model = Spot
         fields = ('id','updated','created','is_active', 'is_filler', 'duration','assets')
 
+
+
 class TvSerializer(serializers.ModelSerializer):
 
         
@@ -202,7 +204,20 @@ class TvSerializer(serializers.ModelSerializer):
 
 
     opening_hours = OpeningHoursSerializer(many=True)
+    
+    def get_fotters(self, tv_obj):
+        fotters = tv_obj.get_tv_fotters()
+        ret = []
+        for f in fotters:
+            ret.append({
+                'title': f.title,
+                'image': f.image.url,
+                'index': f.get_image_index(),
+            })
+        return ret
+    fotters = serializers.SerializerMethodField()
+    
     class Meta:
         model = Tv
-        fields = ('id', 'name',  'updated', 'created', 'get_absolute_url','opening_hours','broadcasts',)
+        fields = ('id', 'name',  'updated', 'created','fotters', 'get_absolute_url','opening_hours','broadcasts',)
         # fields = '__all__'

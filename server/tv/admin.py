@@ -4,14 +4,91 @@ from django.db.models.query import QuerySet
 from django.http.request import HttpRequest
 from django.utils.safestring import mark_safe
 # Register your models here.
-from .models import BetweenDateSchedule, BroadcastInTvs, BroadcastInTvsSchedule, ManualControlSchedule, PlaysCoutdownSchedule, Tv, Broadcast,BroadcastInTv,playedBroadcast,BusinessType
+from .models import BetweenDateSchedule, BroadcastInTvs, BroadcastInTvsSchedule, ManualControlSchedule, PlaysCoutdownSchedule, Tv, Broadcast,BroadcastInTv,playedBroadcast,BusinessType, DefaultTvFotter,TvFotter
 
 # class BroadcastInline(admin.TabularInline):
 #     model = Tv.broadcasts.through
 #     extra = 1
 
 
+class DefaultTvFotterAdmin(admin.ModelAdmin):
+    list_display = ('location_name','index_in_tv','image_display', 'updated','created',)
+    
+    def image_display(self, obj):
+        return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
+            url = obj.image.url,
+            width="50px",
+            height="50px",
+            ))
+        pass
 
+    def image_display(self, obj):
+        return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
+            url = obj.image.url,
+            width="50px",
+            height="50px",
+            ))
+        pass
+    
+    
+    pass
+admin.site.register(DefaultTvFotter, DefaultTvFotterAdmin)
+
+
+from django.contrib.admin import SimpleListFilter
+from django.utils import timezone
+from django.db.models import Q
+
+class TvFotterIsActiveFilter(SimpleListFilter):
+    title = 'active' # or use _('country') for translated title
+    parameter_name = 'active'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('active', 'active'),
+            ('inactive', 'inactive'),
+        )
+        
+    def queryset(self, request, queryset):
+        if self.value() == 'active':
+            # call is_active_prop from models.py
+            return queryset.filter(Q(end_date__isnull=True) | Q(end_date__gte=timezone.now()))
+            
+        if self.value() == 'inactive':
+            # call is_active_prop from models.py
+            return queryset.filter(end_date__lt=timezone.now())
+        return queryset
+
+class TvFotterAdmin(admin.ModelAdmin):
+    list_display = ('title_trim','is_active', 'image_display','end_date','location_default_display','tv_link','updated','created',)
+    list_filter = ('location_default','tv',TvFotterIsActiveFilter)
+    search_fields = ('title','tv__name','location_default__location_name',)
+    def title_trim(self, obj):
+        return obj.title[:15]
+    def tv_link(self, obj):
+        if obj.tv is None:
+            return ""
+        return mark_safe('<a href="/admin/tv/tv/%s/change/">%s</a>' % (obj.tv.id, obj.tv.name))
+    def image_display(self, obj):
+        return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
+            url = obj.image.url,
+            width="50px",
+            height="50px",
+            ))
+        pass
+    pass
+
+    def location_default_display(self, obj):
+        ret = ""
+        if obj.location_default:
+            ret = obj.location_default.location_name + "<br>"
+            ret += '<img src="{url}" width="{width}" height={height} />'.format(
+            url = obj.location_default.image.url,
+            width="50px",
+            height="50px",
+            )
+        return mark_safe(ret)
+admin.site.register(TvFotter, TvFotterAdmin)
 
 class openingHoursInline(admin.TabularInline):
     from core.models import TvOpeningHours
@@ -20,13 +97,29 @@ class openingHoursInline(admin.TabularInline):
 
 # Tv admin
 class TvAdmin(admin.ModelAdmin):
-    list_display = ('id','name', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__humanize_socket_status_updated_ago','order',)
+    list_display = ('id','name','get_tv_fotters_count', 'created', 'updated','pi_admin_link','pi__cec_hdmi_status', 'pi__humanize_socket_status_updated_ago','order',)
     list_editable = ('order',)
     autocomplete_fields = ('pi',)
     search_fields = ('name','address','phone','email','contact_name','contact_phone','pi__name',)
     
-    fields =('name','address','manual_turn_off','phone','email','contact_name','contact_phone','pi','updated','created','uri_key','order',)
-    readonly_fields = ('updated','created',)
+    fields =('name','address','manual_turn_off','phone','email','contact_name','contact_phone','pi','updated','created','uri_key','order', 'fotter_display',)
+    readonly_fields = ('updated','created','fotter_display','get_tv_fotters_count',)
+    
+    def fotter_display(self, obj):
+        ret = "<div style='width: 100%;overflow-x: auto;display: flex;flex-direction:row;'>"
+        fotters = obj.get_tv_fotters()
+        for fotter in fotters:
+            if fotter:
+                ret += '<div class="wraper">'
+                ret += "<img src='{}' style='width: 100px; height: 45px;'><br>".format(fotter.image.url)
+                ret += "<b>{}</b><br>".format(fotter.title)
+                ret += "</div>"
+        ret += "</div>"
+        # edit link: admin/tv/tvfotter/?tv__id__exact=<tv_id>
+        if obj.id:
+            ret += "<a href='/admin/tv/tvfotter/?tv__id__exact={}'>ערוך באנרים בתחתית המסך</a>".format(obj.id)
+        return mark_safe(ret)
+
     # def active_spots_html_display(self, obj):
     #     data = obj.get_active_spots()
     #     ret = ""

@@ -265,6 +265,74 @@ class ContentWithHistory(models.Model):
         return f'{self.content_type}: {self.content}'
     
 
+class DefaultTvFotter(models.Model):
+    location_name = models.CharField(max_length=100, blank=True, null=True)
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='default-tv-fotter/', blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    index_in_tv = models.IntegerField(default=0, unique=True)
+    
+    def save(self):
+        if not self.title:
+            f = self.image.name.split('/')[-1] if self.image else ''
+            self.title = f.split('.')[0]
+        super().save()
+        
+    def __str__(self) -> str:
+        return self.location_name
+    
+    def get_image_index(self):
+        return self.index_in_tv
+
+
+class TvFotter(models.Model):
+    updated = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='tv-fotter/', blank=True, null=True)
+    title = models.CharField(max_length=100, blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    location_default = models.ForeignKey(DefaultTvFotter, on_delete=models.SET_DEFAULT, related_name='fotter', blank=True, null=True, default=None)
+    tv = models.ForeignKey('Tv', on_delete=models.SET_DEFAULT, blank=True, null=True, default=None, related_name='tv_fotter')
+    
+    def get_image_index(self):
+        if self.location_default:
+            return self.location_default.index_in_tv
+        else:
+            return None
+    
+    def is_active(self):
+        if self.end_date:
+            if self.end_date > timezone.now():
+                return True
+            return False
+        return True
+    is_active.boolean = True
+    is_active_prop = property(is_active)
+    
+        
+    def __str__(self) -> str:
+        ret = 'פעיל' if self.is_active() else 'לא פעיל'
+        ret += f' - {self.get_title()}'
+        return ret
+    
+    def save(self):
+        if not self.title:
+            f = self.image.name.split('/')[-1] if self.image else ''
+            self.title = f.split('.')[0]
+        super().save()
+    
+    
+    
+    class Meta:
+        ordering = ['-created','tv','location_default',]
+        unique_together = ['tv','location_default',]
+    
+    def __str__(self):
+        return f'{self.title}'
+    
+
+
 # Create your models here.
 class Tv(models.Model):
     name = models.CharField(max_length=100)
@@ -288,6 +356,7 @@ class Tv(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     uri_key = models.CharField(max_length=100, blank=True, null=True)
     order = models.IntegerField(default=0)
+    
     class Meta:
         ordering = ['-order','-created',]
     def get_location_json(self):
@@ -300,6 +369,23 @@ class Tv(models.Model):
         return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo"
     def get_tv_display_demo_url_with_inactive(self):
         return f"{FRONTEND_BASE_URL}/tv-display/{self.id}/demo?inactive=true"
+    
+    def get_tv_fotters(self):
+        # queryset.filter(Q(end_date__isnull=True) | Q(end_date__gte=timezone.now()))
+        fotters = self.tv_fotter.filter(Q(end_date__isnull=True) | Q(end_date__gte=timezone.now()))
+        FOTTERS_SIZE = 4 # looking for index 0-3
+        ret = []
+        for i in range(FOTTERS_SIZE):
+            # get the fotter with the location_default__index_in_tv = i, if not exist, get the DefaultTvFotter__index_in_tv = i
+            fotter = fotters.filter(location_default__index_in_tv=i).first()
+            if not fotter:
+                fotter = DefaultTvFotter.objects.filter(index_in_tv=i).first()
+            ret.append(fotter)
+        return ret
+
+        
+    def get_tv_fotters_count(self):
+        return self.tv_fotter.filter(Q(end_date__isnull=True) | Q(end_date__gte=timezone.now())).order_by('location_default__index_in_tv').distinct('location_default__index_in_tv').count()
     
     def get_absolute_url(self):
         return f"/tv/{self.id}"
