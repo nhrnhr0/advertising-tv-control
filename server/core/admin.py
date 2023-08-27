@@ -10,6 +10,7 @@ class PublisherAdmin(admin.ModelAdmin):
     # inlines = [UserBroadcastsInline,]
     # filter_horizontal = ('broadcasts',)
     list_filter = ('name',)
+    search_fields = ('name',)
     filter_horizontal=('publishers_types',)
 admin.site.register(Publisher, PublisherAdmin)
 

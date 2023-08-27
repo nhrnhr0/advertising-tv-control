@@ -47,7 +47,7 @@ class PiDevice(models.Model):
     
     def socket_info_updated(self):
         # check if socket_status_updated is updated in the last ALERT_THRESHOLD seconds and if so and telegram_connection_error_sent = True then set it to False
-        if self.socket_status_updated < timezone.now() - timedelta(seconds=ALERT_THRESHOLD) and self.telegram_connection_error_sent:
+        if self.telegram_connection_error_sent:
             self.telegram_connection_error_sent = False
             # send alert
             send_admin_message(f'🟢התקשורת עם המכשיר <b>{self.name}</b> חזר לעבוד כרגיל')

@@ -6,13 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 from .serializers import TvSerializer
 from .models import Tv, Broadcast, BroadcastInTv, playedBroadcast
 import json
-# Create your views here.
-def tv_view(request, id):
-    tv_obj = Tv.objects.get(id=id)
-    context = {
-        'tv_obj': tv_obj,
-    }
-    return render(request, 'tv/view_tv.html', context)
 
 def get_publisher_assets_as_tv_demo(request, id):
     broadcast = Broadcast.objects.get(id=id)
