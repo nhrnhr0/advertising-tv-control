@@ -70,13 +70,13 @@ class TvFotterAdmin(admin.ModelAdmin):
             return ""
         return mark_safe('<a href="/admin/tv/tv/%s/change/">%s</a>' % (obj.tv.id, obj.tv.name))
     def image_display(self, obj):
-        if obj.image is None:
-            return ""
-        return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
-            url = obj.image.url,
-            width="50px",
-            height="50px",
-            ))
+        if obj.image:
+            return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
+                url = obj.image.url,
+                width="50px",
+                height="50px",
+                ))
+        return ""
         pass
     pass
 
